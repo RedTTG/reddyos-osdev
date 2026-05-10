@@ -1,4 +1,4 @@
-#include "idt.h"
+#include "common.h"
 
 static idt_entry_t idt[256];
 static idtr_t idtr;
