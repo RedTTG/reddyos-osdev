@@ -54,12 +54,23 @@ static void pic_send_eoi(uint8_t irq)
 
 void irq_handler(interrupt_frame_t* frame)
 {
-    terminal_write("IRQ: ");
+    if (frame->interrupt_number == 33) {
+        uint8_t scancode = inb(0x60);
+        char buf[4];
 
-    char buf[32];
-    itoa(frame->interrupt_number, buf, 10);
-    terminal_write(buf);
-    terminal_write("\n");
+        terminal_write("Keyboard interrupt received: 0x");
+        const char hex[] = "0123456789abcdef";
+        buf[0] = hex[(scancode >> 4) & 0xF];
+        buf[1] = hex[scancode & 0xF];
+        buf[2] = '\n';
+        buf[3] = 0;
+        terminal_write(buf);
+    }
+
+    //char buf[32];
+    //itoa(frame->interrupt_number, buf, 10);
+    //terminal_write(buf);
+    //terminal_write("\n");
 
     // send EOI
     if (apic_is_enabled()) {
