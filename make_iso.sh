@@ -2,6 +2,7 @@
 mkdir -p dist
 
 (
+set -e
 cd dist
 # Download the latest Limine binary release, only if not already present.
 if [ ! -d "limine-binary" ]; then

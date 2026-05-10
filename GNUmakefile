@@ -74,8 +74,10 @@ override CFLAGS += \
     -mcmodel=kernel
 
 # Internal C preprocessor flags that should not be changed by the user.
+override HEADER_DIRS := $(shell find -L headers -type d 2>/dev/null | LC_ALL=C sort)
 override CPPFLAGS := \
     -I src \
+    $(patsubst %,-I %,$(HEADER_DIRS)) \
     $(CPPFLAGS) \
     -MMD \
     -MP
