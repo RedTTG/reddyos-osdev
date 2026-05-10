@@ -5,18 +5,6 @@
 static const uint16_t SERIAL_PORT = 0x3F8;
 static bool terminal_ready = false;
 
-static inline void outb(uint16_t port, uint8_t value)
-{
-    __asm__ volatile ("outb %0, %1" : : "a"(value), "Nd"(port));
-}
-
-static inline uint8_t inb(uint16_t port)
-{
-    uint8_t value;
-    __asm__ volatile ("inb %1, %0" : "=a"(value) : "Nd"(port));
-    return value;
-}
-
 static void terminal_wait(void)
 {
     while ((inb(SERIAL_PORT + 5) & 0x20) == 0) {

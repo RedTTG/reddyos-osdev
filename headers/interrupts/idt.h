@@ -1,6 +1,8 @@
 #pragma once
 #include <stdint.h>
 
+extern void* isr_stub_table[];
+
 // Define the 64bit Interrupt descriptor table struct
 
 typedef struct
@@ -22,4 +24,5 @@ typedef struct
     uint64_t base;
 } __attribute__((packed)) idtr_t;
 
+void idt_set_gate(int vector, void* isr, uint8_t flags);
 void idt_init(void);

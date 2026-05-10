@@ -20,24 +20,30 @@ static const char* exceptions[] =
     "Page Fault"
 };
 
-typedef struct
-{
-    uint64_t r15, r14, r13, r12;
-    uint64_t r11, r10, r9, r8;
-    uint64_t rsi, rdi, rbp, rdx;
-    uint64_t rcx, rbx, rax;
-
-    uint64_t interrupt_number;
-    uint64_t error_code;
-
-    uint64_t rip;
-    uint64_t cs;
-    uint64_t rflags;
-    uint64_t rsp;
-    uint64_t ss;
-} interrupt_frame_t;
-
 void isr_handler(interrupt_frame_t* frame)
 {
+    if (frame->interrupt_number == 14) {
+        uint64_t cr2;
+        __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
+
+        terminal_write("\nKERNEL PANIC: Page Fault\n");
+        terminal_write("CR2: ");
+        terminal_write_hex_u64(cr2);
+        terminal_write("\n");
+
+        terminal_write("ERR: ");
+        terminal_write_hex_u64(frame->error_code);
+        terminal_write("\n");
+
+        terminal_write("RIP: ");
+        terminal_write_hex_u64(frame->rip);
+        terminal_write("\n");
+
+        __asm__ volatile("cli");
+        for (;;) {
+            __asm__ volatile("hlt");
+        }
+    }
+
     panic(exceptions[frame->interrupt_number]);
 }

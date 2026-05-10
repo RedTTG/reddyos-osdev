@@ -19,28 +19,42 @@ void kmain(void) {
     terminal_init();
     terminal_write("booted\n");
 
+
     // Ensure we got a framebuffer.
-    //if (framebuffer_request.response == NULL
-    // || framebuffer_request.response->framebuffer_count < 1) {
-    //    hcf();
-    //}
+    if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
+        hcf();
+    }
 
     // Fetch the first framebuffer.
-    //struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
+    struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
 
     // Print a nice pattern to screen as an example.
     // Note: we assume the framebuffer model is RGB with 32-bit pixels.
-    //volatile uint32_t *fb_ptr = framebuffer->address;
-    //for (size_t y = 0; y < framebuffer->height; y++) {
-    //    for (size_t x = 0; x < framebuffer->width; x++) {
-    //        uint32_t nX = x * 255 / framebuffer->width;
-    //        uint32_t nY = y * 255 / framebuffer->height;
-    //        fb_ptr[y * (framebuffer->pitch / 4) + x] = (nY << 8) | nX;
-    //    }
-    //}
+    volatile uint32_t *fb_ptr = framebuffer->address;
+    for (size_t y = 0; y < framebuffer->height; y++) {
+        for (size_t x = 0; x < framebuffer->width; x++) {
+            uint32_t nX = x * 255 / framebuffer->width;
+            uint32_t nY = y * 255 / framebuffer->height;
+            fb_ptr[y * (framebuffer->pitch / 4) + x] = (nY << 8) | nX;
+        }
+    }
 
+    // Interrupts and IRQs
     idt_init();
+    irq_init();
+    irq_install();
+    pit_init(100);
 
+    if (apic_is_enabled()) {
+        apic_init();
+    } else {
+        // pass
+    }
+
+    pic_unmask_irq(0);
+    pic_unmask_irq(1);
+
+    __asm__ volatile("sti");
 
     // We're done, just hang...
     hcf();
