@@ -8,25 +8,22 @@
   outputs = { self, nixpkgs }:
   let
     system = "x86_64-linux";
+
     pkgs = import nixpkgs {
       inherit system;
     };
+
+    cross = pkgs.pkgsCross.x86_64-embedded;
+
   in {
     devShells.${system}.default = pkgs.mkShell {
       packages = with pkgs; [
-        nasm
         xorriso
-        grub2
         qemu
 
-        # cross compiler
-        pkgsCross.x86_64-embedded.buildPackages.gcc
-        pkgsCross.x86_64-embedded.buildPackages.binutils
+        cross.buildPackages.gcc
+        cross.buildPackages.binutils
       ];
-
-      shellHook = ''
-        echo "OSDEV environment ready"
-      '';
     };
   };
 }
