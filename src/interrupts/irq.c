@@ -1,6 +1,8 @@
 #include "common.h"
 #include <stdint.h>
 
+static irq_handler_t handlers[256] = {0};
+
 void pic_remap(int offset1, int offset2)
 {
     uint8_t a1 = inb(PIC1_DATA);
@@ -44,7 +46,7 @@ void irq_install(void)
     }
 }
 
-static void pic_send_eoi(uint8_t irq)
+static void pic_send_eoi(const uint8_t irq)
 {
     if (irq >= 8)
         outb(PIC2_CMD, 0x20);
@@ -52,25 +54,20 @@ static void pic_send_eoi(uint8_t irq)
     outb(PIC1_CMD, 0x20);
 }
 
+void irq_register_handler(const uint8_t vector, const irq_handler_t handler) {
+    handlers[vector] = handler;
+}
+
+void irq_dispatch(interrupt_frame_t* frame) {
+    const uint8_t vector = frame->interrupt_number;
+
+    if (handlers[vector])
+        handlers[vector](frame);
+}
+
 void irq_handler(interrupt_frame_t* frame)
 {
-    if (frame->interrupt_number == 33) {
-        uint8_t scancode = inb(0x60);
-        char buf[4];
-
-        terminal_write("Keyboard interrupt received: 0x");
-        const char hex[] = "0123456789abcdef";
-        buf[0] = hex[(scancode >> 4) & 0xF];
-        buf[1] = hex[scancode & 0xF];
-        buf[2] = '\n';
-        buf[3] = 0;
-        terminal_write(buf);
-    }
-
-    //char buf[32];
-    //itoa(frame->interrupt_number, buf, 10);
-    //terminal_write(buf);
-    //terminal_write("\n");
+    irq_dispatch(frame);
 
     // send EOI
     if (lapic_is_enabled()) {

@@ -3,7 +3,17 @@
 volatile uint32_t* lapic;
 bool lapic_enabled = false;
 
-void lapic_map() {
+static void lapic_write(uint32_t reg, uint32_t val)
+{
+    lapic[reg / 4] = val;
+}
+
+static uint32_t lapic_read(uint32_t reg)
+{
+    return lapic[reg / 4];
+}
+
+static void lapic_map() {
     map_page(
         (uint64_t)memvirt(lapic_address),
         lapic_address,
@@ -13,8 +23,10 @@ void lapic_map() {
 
 void lapic_init()
 {
+    lapic_map();
     lapic = (volatile uint32_t*)memvirt(lapic_address);
     lapic_enable();
+    lapic_write(LAPIC_TPR, 0);
 }
 
 void lapic_enable(void)
@@ -23,15 +35,7 @@ void lapic_enable(void)
     lapic_enabled = true;
 }
 
-void lapic_write(uint32_t reg, uint32_t val)
-{
-    lapic[reg / 4] = val;
-}
 
-uint32_t lapic_read(uint32_t reg)
-{
-    return lapic[reg / 4];
-}
 
 void lapic_eoi(void)
 {
@@ -44,17 +48,60 @@ bool lapic_is_enabled(void)
     return lapic_enabled;
 }
 
-void lapic_timer_init(uint32_t hz)
+void lapic_timer_start(void)
 {
-    // 1. Stop timer
-    lapic_write(LAPIC_TMR_LVT, 0x10000);
+    // Lower TPR so timer IRQ can pass
+    lapic_write(LAPIC_TPR, 0);
 
-    // 2. Set divider (divide by 16 is common)
-    lapic_write(LAPIC_TMR_DIV, 0x3);
+    // Stop timer first
+    lapic_write(
+        LAPIC_TIMER_LVT,
+        LAPIC_LVT_INT_MASKED
+    );
 
-    // 3. Set periodic mode + interrupt vector
-    lapic_write(LAPIC_TMR_LVT, LAPIC_TIMER_VECTOR | (1 << 17));
+    // Divider = 16
+    lapic_write(
+        LAPIC_TIMER_DIV,
+        LAPIC_DIVIDE_BY_16
+    );
 
-    // 4. Set initial count (we fake calibration for now)
-    lapic_write(LAPIC_TMR_INIT, 1000000 / hz);
+    // PIT calibration sleep (10ms)
+    pit_prepare_sleep(10000);
+
+    // Start LAPIC countdown from max
+    lapic_write(
+        LAPIC_TIMER_INITCNT,
+        0xFFFFFFFF
+    );
+
+    // Wait 10ms
+    pit_perform_sleep();
+
+    // Stop timer
+    lapic_write(
+        LAPIC_TIMER_LVT,
+        LAPIC_LVT_INT_MASKED
+    );
+
+    // Calculate elapsed ticks
+    uint32_t ticks_in_10ms =
+        0xFFFFFFFF -
+        lapic_read(LAPIC_TIMER_CURRCNT);
+
+    // Program periodic timer
+    lapic_write(
+        LAPIC_TIMER_DIV,
+        LAPIC_DIVIDE_BY_16
+    );
+
+    lapic_write(
+        LAPIC_TIMER_LVT,
+        LAPIC_TIMER_VECTOR |
+        LAPIC_LVT_PERIODIC
+    );
+
+    lapic_write(
+        LAPIC_TIMER_INITCNT,
+        ticks_in_10ms
+    );
 }
