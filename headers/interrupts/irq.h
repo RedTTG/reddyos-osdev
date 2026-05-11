@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stub_lists.h"
+
 #define PIC1 0x20
 #define PIC2 0xA0
 #define PIC1_CMD PIC1
@@ -12,6 +14,10 @@
 #define ICW4_8086 0x01
 #include "isr.h"
 
+#define DECLARE_IRQ_STUB(n) extern char irq_stub_##n[];
+IRQ_STUB_LIST(DECLARE_IRQ_STUB)
+#undef DECLARE_IRQ_STUB
+
 extern void* irq_stub_table[];
 
 void pic_remap(int offset1, int offset2);
@@ -23,3 +29,5 @@ void pic_disable(void);
 typedef void (*irq_handler_t)(const interrupt_frame_t*);
 void irq_register_handler(uint8_t vector, irq_handler_t handler);
 void irq_dispatch(interrupt_frame_t* frame);
+
+

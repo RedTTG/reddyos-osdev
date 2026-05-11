@@ -1,6 +1,12 @@
 global isr_stub_table
 extern isr_handler
 
+%assign i 0
+%rep 32
+extern isr_stub_%+i
+%assign i i+1
+%endrep
+
 %macro ISR_NOERR 1
 isr_stub_%1:
     push 0
@@ -93,11 +99,4 @@ isr_common:
     add rsp, 16
     iretq
 
-section .data
-
-isr_stub_table:
-%assign i 0
-%rep 32
-    dq isr_stub_%+i
-%assign i i+1
-%endrep
+section .note.GNU-stack noalloc noexec nowrite progbits

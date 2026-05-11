@@ -4,6 +4,12 @@ static idt_entry_t idt[256];
 static idtr_t idtr;
 static uint16_t kernel_cs_selector;
 
+#define ISR_TABLE_ENTRY(n) (void*)isr_stub_##n,
+void* isr_stub_table[32] = {
+    ISR_STUB_LIST(ISR_TABLE_ENTRY)
+};
+#undef ISR_TABLE_ENTRY
+
 static uint16_t get_kernel_cs_selector(void)
 {
     uint16_t cs;

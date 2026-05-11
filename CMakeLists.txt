@@ -20,8 +20,6 @@ set(CMAKE_ASM_NASM_COMPILER "${NASM_EXECUTABLE}" CACHE STRING "NASM assembler")
 
 # C Compiler flags (applied to the target below)
 set(_REDDYOS_C_FLAGS
-    -target
-    x86_64-unknown-none-elf
     -ffreestanding
     -fno-stack-protector
     -fno-stack-check
@@ -42,6 +40,15 @@ set(_REDDYOS_C_FLAGS
     -Wextra
     -g
     -O2
+)
+
+# Add clang-only -target flags using a generator expression so the flags are
+# applied only when the actual compiler is Clang at build time. This avoids
+# passing '-target' to GCC/cc (which will error) even if CMake's configure-time
+# detection was inconsistent with the compiler used at build time.
+list(PREPEND _REDDYOS_C_FLAGS
+    $<$<C_COMPILER_ID:Clang>:-target>
+    $<$<C_COMPILER_ID:Clang>:x86_64-unknown-none-elf>
 )
 
 # Linker flags

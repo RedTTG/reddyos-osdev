@@ -1,6 +1,12 @@
 global irq_stub_table
 extern irq_handler
 
+%assign i 0
+%rep 16
+extern irq_stub_%+i
+%assign i i+1
+%endrep
+
 %macro IRQ 1
 irq_stub_%1:
     push 0
@@ -66,11 +72,4 @@ irq_common:
     add rsp, 16
     iretq
 
-section .data
-
-irq_stub_table:
-%assign i 0
-%rep 16
-    dq irq_stub_%+i
-%assign i i+1
-%endrep
+section .note.GNU-stack noalloc noexec nowrite progbits

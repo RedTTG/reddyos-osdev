@@ -1,6 +1,12 @@
 #include "common.h"
 #include <stdint.h>
 
+#define IRQ_TABLE_ENTRY(n) (void*)irq_stub_##n,
+void* irq_stub_table[16] = {
+    IRQ_STUB_LIST(IRQ_TABLE_ENTRY)
+};
+#undef IRQ_TABLE_ENTRY
+
 static irq_handler_t handlers[256] = {0};
 
 void pic_remap(int offset1, int offset2)
@@ -67,14 +73,14 @@ void irq_dispatch(interrupt_frame_t* frame) {
 
 void irq_handler(interrupt_frame_t* frame)
 {
-    irq_dispatch(frame);
-
     // send EOI
     if (lapic_is_enabled()) {
         lapic_eoi();
     } else {
         pic_send_eoi(frame->interrupt_number - 32);
     }
+
+    irq_dispatch(frame);
 }
 
 void pic_unmask_irq(uint8_t irq)
