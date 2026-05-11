@@ -39,20 +39,22 @@ void kmain(void) {
         }
     }
 
-    // Interrupts and IRQs
+    // Interrupts and IRQs remap
     idt_init();
     irq_init();
     irq_install();
+
+    // Basic clock
     pit_init(100);
 
+    // Start interrupts
     if (apic_is_enabled()) {
+        pic_disable();
         apic_init();
     } else {
-        // pass
+        pic_unmask_irq(0);
+        pic_unmask_irq(1);
     }
-
-    pic_unmask_irq(0);
-    pic_unmask_irq(1);
 
     __asm__ volatile("sti");
 
