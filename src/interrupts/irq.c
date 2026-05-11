@@ -73,8 +73,8 @@ void irq_handler(interrupt_frame_t* frame)
     //terminal_write("\n");
 
     // send EOI
-    if (apic_is_enabled()) {
-        apic_eoi();
+    if (lapic_is_enabled()) {
+        lapic_eoi();
     } else {
         pic_send_eoi(frame->interrupt_number - 32);
     }

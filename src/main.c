@@ -17,7 +17,7 @@ void kmain(void) {
     }
 
     terminal_init();
-    terminal_write("booted\n");
+    terminal_write("Booted\n");
 
 
     // Ensure we got a framebuffer.
@@ -48,15 +48,27 @@ void kmain(void) {
     pit_init(100);
 
     // Start interrupts
-    if (apic_is_enabled()) {
-        pic_disable();
-        apic_init();
-    } else {
-        pic_unmask_irq(0);
-        pic_unmask_irq(1);
-    }
+    // if (apic_is_enabled() || false) {
+    //     pic_disable();
+    //     apic_init();
+    // } else {
+    //     pic_unmask_irq(0);
+    //     pic_unmask_irq(1);
+    // }
 
+
+
+    // ACPI
+    pmm_init();
+    acpi_init();
+    lapic_map();
+    ioapic_map();
+    lapic_init();
+    ioapic_init();
     __asm__ volatile("sti");
+
+    ioapic_redirect_irq(0, 32); // PIT
+    ioapic_redirect_irq(1, 33); // Keyboard
 
     // We're done, just hang...
     hcf();

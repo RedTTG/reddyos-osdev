@@ -20,10 +20,14 @@
       packages = with pkgs; [
         xorriso
         qemu
+        zsh
 
         cross.buildPackages.gcc
         cross.buildPackages.binutils
       ];
+      shellHook = ''
+                  exec zsh
+                '';
     };
   };
 }
