@@ -14,14 +14,18 @@ static void hcf(void)
 
 void timer_handler(const interrupt_frame_t* frame)
 {
-    (void)frame;
+    // terminal_write("TIMER\n");
+    schedule();
+}
 
-    static uint64_t ticks = 0;
-    ticks++;
-    if (ticks >= 100) {
-        animate_square();
-        ticks = 0;
-    }
+void task_a(void)
+{
+    terminal_write("A");
+}
+
+void task_b(void)
+{
+    terminal_write("B");
 }
 
 void kmain(void) {
@@ -54,13 +58,23 @@ void kmain(void) {
     lapic_init();
     ioapic_init();
     __asm__ volatile("sti");
+    scheduler_init();
 
     ioapic_redirect_irq(0, 32); // PIT
     ioapic_redirect_irq(1, 33); // Keyboard
 
     irq_register_handler(32, timer_handler);
 
+    task_t* a = task_create(task_a);
+    task_t* b = task_create(task_b);
+
+    scheduler_add(a);
+    scheduler_add(b);
+
+    terminal_write("Rawr\n");
+    // schedule();
     lapic_timer_start();
+
 
     // We're done, just hang...
     hcf();

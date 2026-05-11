@@ -30,3 +30,7 @@
 // C generics
 #include "io.h"
 #include "itoa.h"
+
+// Scheduler
+#include "scheduler/task.h"
+#include "scheduler/scheduler.h"

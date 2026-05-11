@@ -15,3 +15,4 @@ cmake --build build
 
 # Run the ISO image in QEMU.
 qemu-system-x86_64 -machine q35 -cdrom dist/image.iso -m 512M -serial stdio
+#-M accel=tcg,smm=off -d int -no-reboot -no-shutdown
