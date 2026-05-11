@@ -2,7 +2,13 @@
 set -e
 
 # Build the kernel and the bootloader.
-make
+mkdir -p build
+(
+cd build
+cmake ..
+)
+mkdir -p dist
+cmake --build build
 
 # Build the ISO image.
 ./make_iso.sh
