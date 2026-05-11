@@ -10,3 +10,4 @@ extern volatile struct limine_rsdp_request rsdp_request;
 
 // Helper function for hhdm physical to virtual address space
 void* memvirt(uint64_t phys);
+void* memphys(uint64_t virt);

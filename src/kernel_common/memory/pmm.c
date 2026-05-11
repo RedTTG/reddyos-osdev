@@ -42,10 +42,18 @@ void* pmm_alloc_page(void)
     return 0; // out of memory
 }
 
+void* pmm_alloc_virt_page(void) {
+    return memvirt((uint64_t)pmm_alloc_page());
+}
+
 void pmm_free_page(void* page)
 {
     size_t i = (uint64_t)page / PAGE_SIZE;
     clear_bit(i);
+}
+
+void pmm_free_virt_page(void* page) {
+    pmm_free_page(memphys((uint64_t)page));
 }
 
 void pmm_init(void)
