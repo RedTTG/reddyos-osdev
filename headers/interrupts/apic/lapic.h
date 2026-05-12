@@ -40,6 +40,9 @@
 #define LAPIC_DIVIDE_BY_128    0xA
 #define LAPIC_DIVIDE_BY_1      0xB
 
+// Thread time / tick rate of the timer
+#define LAPIC_TIMER_MS 50
+
 void lapic_init();
 void lapic_enable(void);
 void lapic_eoi(void);

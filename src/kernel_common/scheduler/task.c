@@ -19,6 +19,10 @@ static __attribute__((noreturn)) void task_bootstrap(void)
         current_task->entry();
     }
 
+    terminal_write("Task with ID=");
+    terminal_write_u64(current_task->id);
+    terminal_write(" is ready for free\n");
+
     // TODO: Mark for deletion
     for (;;)
         __asm__ volatile("hlt");

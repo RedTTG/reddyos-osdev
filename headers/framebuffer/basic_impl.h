@@ -12,6 +12,7 @@ static int square_y;
 static int square_dx = 4;
 static int square_dy = 2;
 static uint32_t square_size = 32;
+static uint32_t square_ticks = 0;
 
 static const uint32_t FB_BLACK = 0x000000;
 static const uint32_t FB_RED   = 0xFF0000;
@@ -44,6 +45,10 @@ static void fb_draw_square(int x, int y, uint32_t color)
 
 void animate_square(void)
 {
+    square_ticks++;
+    if (square_ticks < 1000 * 1000)
+        return;
+    square_ticks = 0;
     fb_draw_square(square_x, square_y, FB_BLACK);
 
     int next_x = square_x + square_dx;

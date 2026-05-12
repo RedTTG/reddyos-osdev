@@ -66,7 +66,7 @@ void lapic_timer_start(void)
     );
 
     // PIT calibration sleep (10ms)
-    pit_prepare_sleep(10000);
+    pit_prepare_sleep(LAPIC_TIMER_MS * 1000);
 
     // Start LAPIC countdown from max
     lapic_write(

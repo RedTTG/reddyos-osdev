@@ -20,12 +20,15 @@ void timer_handler(const interrupt_frame_t* frame)
 
 void task_a(void)
 {
-    terminal_write("A");
+    // ReSharper disable once CppDFAEndlessLoop
+    while (1) {
+        animate_square();
+    }
 }
 
 void task_b(void)
 {
-    terminal_write("B");
+    terminal_write("Task B\n");
 }
 
 void kmain(void) {
