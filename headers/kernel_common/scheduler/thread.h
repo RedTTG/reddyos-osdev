@@ -3,21 +3,17 @@
 #pragma once
 #include <stdint.h>
 
-typedef struct context
-{
-    uint64_t r15, r14, r13, r12;
-    uint64_t rbx, rbp, rsp, rax;
-} context_t;
-
 typedef struct thread
 {
-    context_t context;
-
-    void (*entry)(void);
+    uint64_t rsp; // Important in the top for ctx switch
     uint8_t* stack;
-    uint64_t id;
+    uint64_t tid;
+    void (*entry)(void* arg);
+
 
     struct thread* next;
 } thread_t;
 
-thread_t* thread_create(void (*entry)(void));
+extern void thread_entry_kernel();
+extern void arch_switch_thread(thread_t* old, thread_t* next);
+thread_t* thread_create(void (*entry)(void* arg));

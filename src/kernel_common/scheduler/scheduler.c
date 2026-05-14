@@ -9,16 +9,12 @@ void scheduler_init(void) {
     current_thread = &bootstrap_task;
 }
 
-extern void context_switch(
-    context_t* old,
-    context_t* new
-);
-
 void scheduler_add(thread_t* thread)
 {
     if (!thread_list)
     {
         thread_list = thread;
+        // current_thread = thread_list;
         return;
     }
 
@@ -41,19 +37,23 @@ void schedule()
     if (!next || next == prev)
         return;
 
-    // terminal_write("prev: ");
-    // terminal_write_u64(prev->id);
-    // terminal_write(", next: ");
-    // terminal_write_u64(next->id);
+    // terminal_write("prev (");
+    // terminal_write_u64(prev->tid);
+    // terminal_write("): ");
+    // terminal_write_hex_u64(prev->rsp);
+    // terminal_write(", next (");
+    // terminal_write_u64(next->tid);
+    // terminal_write("): ");
+    // terminal_write_hex_u64(next->rsp);
     // terminal_write("\n");
 
     current_thread = next;
 
     // terminal_write("Switching to thread ");
-    // terminal_write_u64(current_thread->id);
+    // terminal_write_u64(current_thread->tid);
     // terminal_write("\n");
-    context_switch(
-        &prev->context,
-        &current_thread->context
+    arch_switch_thread(
+        prev,
+        current_thread
     );
 }

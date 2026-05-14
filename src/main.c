@@ -18,7 +18,7 @@ void timer_handler(const interrupt_frame_t* frame)
     schedule();
 }
 
-void task_a(void)
+void task_a(void* arg)
 {
     // ReSharper disable once CppDFAEndlessLoop
     while (1) {
@@ -26,7 +26,7 @@ void task_a(void)
     }
 }
 
-void task_b(void)
+void task_b(void* arg)
 {
     file_t file;
 
