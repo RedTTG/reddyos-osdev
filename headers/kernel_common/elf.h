@@ -41,6 +41,8 @@ typedef struct {
     uint64_t paddr;
     uint64_t filesz;
     uint64_t memsz;
+    uint64_t align;
 } elf_phdr_t;
 
-elf_info_t elf_load(file_t* file);
+int elf_read_info(file_t* file, elf_info_t* info);
+int elf_load_into_cr3(uint64_t cr3, file_t* file, const elf_info_t* info);

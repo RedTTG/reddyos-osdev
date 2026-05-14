@@ -19,5 +19,16 @@
 
 #define VIRT(p) ((void*)((uint64_t)(p) + hhdm_request.response->offset))
 
+void paging_init(void);
+uint64_t paging_current_cr3(void);
+uint64_t paging_kernel_cr3(void);
+void paging_load_cr3(uint64_t cr3);
+uint64_t paging_create_address_space(void);
+
 void map_page(uint64_t virt, uint64_t phys, uint64_t flags);
 void identity_map_region(uint64_t start, uint64_t size);
+
+// Debug helper: walk the page tables of the given CR3 and return the physical
+// page base for the supplied virtual address (or 0 if not mapped).
+uint64_t paging_virt_to_phys(uint64_t cr3, uint64_t virt);
+

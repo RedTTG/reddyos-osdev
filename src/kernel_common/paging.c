@@ -1,5 +1,7 @@
 #include "common.h"
 
+static uint64_t kernel_cr3 = 0;
+
 static uint64_t get_cr3(void)
 {
     uint64_t val;
@@ -7,15 +9,62 @@ static uint64_t get_cr3(void)
     return val & ~0xFFF;
 }
 
+static void set_cr3(uint64_t cr3)
+{
+    __asm__ volatile ("mov %0, %%cr3" :: "r"(cr3) : "memory");
+}
+
+void paging_init(void)
+{
+    kernel_cr3 = get_cr3();
+}
+
+uint64_t paging_current_cr3(void)
+{
+    return get_cr3();
+}
+
+uint64_t paging_kernel_cr3(void)
+{
+    return kernel_cr3;
+}
+
+void paging_load_cr3(uint64_t cr3)
+{
+    set_cr3(cr3);
+}
+
+uint64_t paging_create_address_space(void)
+{
+    if (!kernel_cr3)
+        paging_init();
+
+    uint64_t new_phys = (uint64_t)pmm_alloc_page();
+    if (!new_phys)
+        return 0;
+
+    uint64_t* new_pml4 = (uint64_t*)VIRT(new_phys);
+    uint64_t* kernel_pml4 = (uint64_t*)VIRT(kernel_cr3);
+
+    memset(new_pml4, 0, PAGE_SIZE);
+
+    for (size_t i = 256; i < 512; i++)
+        new_pml4[i] = kernel_pml4[i];
+
+    return new_phys;
+}
+
 void map_page(uint64_t virt, uint64_t phys, uint64_t flags)
 {
-    // terminal_write("Mapping page: virt=");
-    // terminal_write_hex_u64(virt);
-    // terminal_write(" phys=");
-    // terminal_write_hex_u64(phys);
-    // terminal_write(" flags=");
-    // terminal_write_hex_u64(flags);
-    // terminal_write("\n");
+    terminal_write("Mapping page: virt=");
+    terminal_write_hex_u64(virt);
+    terminal_write(" phys=");
+    terminal_write_hex_u64(phys);
+    terminal_write(" flags=");
+    if (flags & PAGE_PRESENT) terminal_write("PRESENT ");
+    if (flags & PAGE_WRITABLE) terminal_write("WRITABLE ");
+    if (flags & PAGE_USER) terminal_write("USER ");
+    terminal_write("\n");
     virt &= ~0xFFFULL;
     phys &= ~0xFFFULL;
 
@@ -35,7 +84,7 @@ void map_page(uint64_t virt, uint64_t phys, uint64_t flags)
         uint64_t new_table = (uint64_t)pmm_alloc_page();
         if (!new_table)
             panic("Out of physical memory while allocating PML4 table");
-        pml4[pml4_i] = new_table | PAGE_PRESENT | PAGE_WRITABLE;
+        pml4[pml4_i] = new_table | PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER;
 
         memset(VIRT(new_table), 0, 0x1000);
     }
@@ -48,7 +97,7 @@ void map_page(uint64_t virt, uint64_t phys, uint64_t flags)
         uint64_t new_table = (uint64_t)pmm_alloc_page();
         if (!new_table)
             panic("Out of physical memory while allocating PDPT table");
-        pdpt[pdpt_i] = new_table | PAGE_PRESENT | PAGE_WRITABLE;
+        pdpt[pdpt_i] = new_table | PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER;
 
         memset(VIRT(new_table), 0, 0x1000);
     }
@@ -61,7 +110,7 @@ void map_page(uint64_t virt, uint64_t phys, uint64_t flags)
         uint64_t new_table = (uint64_t)pmm_alloc_page();
         if (!new_table)
             panic("Out of physical memory while allocating PD table");
-        pd[pd_i] = new_table | PAGE_PRESENT | PAGE_WRITABLE;
+        pd[pd_i] = new_table | PAGE_PRESENT | PAGE_WRITABLE | PAGE_USER;
 
         memset(VIRT(new_table), 0, 0x1000);
     }

@@ -37,6 +37,17 @@ void schedule()
     if (!next || next == prev)
         return;
 
+    const uint64_t target_cr3 = next->process
+        ? next->process->cr3
+        : paging_kernel_cr3();
+
+    if (target_cr3 && target_cr3 != paging_current_cr3()) {
+        // terminal_write("Switching target cr3 to: ");
+        // terminal_write_hex_u64(target_cr3);
+        // terminal_write("\n");
+        paging_load_cr3(target_cr3);
+    }
+
     // terminal_write("prev (");
     // terminal_write_u64(prev->tid);
     // terminal_write("): ");
@@ -51,7 +62,12 @@ void schedule()
 
     // terminal_write("Switching to thread ");
     // terminal_write_u64(current_thread->tid);
+    // if (current_thread->process) {
+    //     terminal_write(" of PID ");
+    //     terminal_write_u64(current_thread->process->pid);
+    // }
     // terminal_write("\n");
+
     arch_switch_thread(
         prev,
         current_thread

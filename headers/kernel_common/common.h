@@ -42,5 +42,9 @@
 #include "itoa.h"
 
 // Scheduler
+#include "scheduler/process.h"
 #include "scheduler/thread.h"
 #include "scheduler/scheduler.h"
+
+// Syscalls
+#include "syscalls/syscalls.h"

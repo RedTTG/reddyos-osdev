@@ -1,5 +1,14 @@
 #include "common.h"
 
+#define ELF_MAGIC_0 0x7F
+#define ELF_MAGIC_1 'E'
+#define ELF_MAGIC_2 'L'
+#define ELF_MAGIC_3 'F'
+#define ELF_CLASS_64 2
+#define ELF_DATA_LITTLE_ENDIAN 1
+#define ELF_VERSION_CURRENT 1
+#define ELF_MACHINE_X86_64 62
+
 static int read_exact(file_t* file, void* buffer, uint64_t size)
 {
     uint8_t* out = buffer;
@@ -40,26 +49,78 @@ static uint64_t segment_flags(uint32_t elf_flags)
     return flags;
 }
 
-elf_info_t elf_load(file_t* file)
+static int read_elf_header(file_t* file, elf_header_t* header)
+{
+    file->offset = 0;
+    if (read_exact(file, header, sizeof(*header)) < 0)
+        return -1;
+
+    if (header->magic[0] != ELF_MAGIC_0 ||
+        header->magic[1] != ELF_MAGIC_1 ||
+        header->magic[2] != ELF_MAGIC_2 ||
+        header->magic[3] != ELF_MAGIC_3)
+        return -1;
+
+    if (header->class != ELF_CLASS_64 ||
+        header->data != ELF_DATA_LITTLE_ENDIAN ||
+        header->version != ELF_VERSION_CURRENT ||
+        header->version2 != ELF_VERSION_CURRENT ||
+        header->machine != ELF_MACHINE_X86_64)
+        return -1;
+
+    if (header->phentsize != sizeof(elf_phdr_t))
+        return -1;
+
+    return 0;
+}
+
+int elf_read_info(file_t* file, elf_info_t* info)
 {
     elf_header_t header;
 
-    file->offset = 0;
-    if (read_exact(file, &header, sizeof(header)) < 0)
-        return (elf_info_t){0};
+    if (!file || !info)
+        return -1;
+
+    if (read_elf_header(file, &header) < 0)
+        return -1;
+
+    *info = (elf_info_t){
+        .entry = header.entry,
+        .base = 0
+    };
+
+    return 0;
+}
+
+int elf_load_into_cr3(uint64_t cr3, file_t* file, const elf_info_t* info)
+{
+    elf_header_t header;
+    uint64_t old_cr3;
+
+    if (!cr3 || !file || !info)
+        return -1;
+
+    if (read_elf_header(file, &header) < 0)
+        return -1;
+
+    if (info->entry != header.entry)
+        return -1;
+
+    old_cr3 = paging_current_cr3();
+    paging_load_cr3(cr3);
 
     for (uint16_t i = 0; i < header.phnum; i++) {
         elf_phdr_t ph;
 
         file->offset = header.phoff + ((uint64_t)i * header.phentsize);
         if (read_exact(file, &ph, sizeof(ph)) < 0)
-            return (elf_info_t){0};
+            goto fail;
 
         if (ph.type != PT_LOAD)
             continue;
 
         if (ph.filesz > ph.memsz)
-            return (elf_info_t){0};
+            goto fail;
 
         const uint64_t map_start = align_down(ph.vaddr);
         const uint64_t map_end = align_up(ph.vaddr + ph.memsz);
@@ -76,6 +137,10 @@ elf_info_t elf_load(file_t* file)
             const uint64_t virt = map_start + (page << 12);
             phys_pages[page] = (uint64_t)pmm_alloc_page();
 
+            if (!phys_pages[page])
+                goto fail;
+
+            // WRITEABLE IS ENSURED
             map_page(
                 virt,
                 phys_pages[page],
@@ -83,14 +148,25 @@ elf_info_t elf_load(file_t* file)
             );
         }
 
+        // DEBUG: fill with 1s
+        //memset((void*)map_start, 0xFF, map_end - map_start);
+
         file->offset = ph.offset;
         if (read_exact(file, (void*)ph.vaddr, ph.filesz) < 0)
-            return (elf_info_t){0};
+            goto fail;
 
         if (ph.memsz > ph.filesz)
             memset((void*)(ph.vaddr + ph.filesz), 0, ph.memsz - ph.filesz);
 
         for (uint64_t page = 0; page < page_count; page++) {
+            // DEBUG: Dump the first 5 bytes of the this page
+            // for (size_t b = 0; b < 5; b++) {
+            //     uint8_t byte = *((uint8_t*)(map_start + (page << 12) + b));
+            //     terminal_write_hex_u8(byte);
+            //     terminal_write(" ");
+            // }
+
+            // NOT WRITEABLE
             map_page(
                 map_start + (page << 12),
                 phys_pages[page],
@@ -99,8 +175,10 @@ elf_info_t elf_load(file_t* file)
         }
     }
 
-    return (elf_info_t){
-        .entry = header.entry,
-        .base = 0
-    };
+    paging_load_cr3(old_cr3);
+    return 0;
+
+fail:
+    paging_load_cr3(old_cr3);
+    return -1;
 }
