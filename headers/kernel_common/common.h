@@ -1,12 +1,21 @@
 #pragma once
 // This is the one header that includes all other common headers
-#include <string.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
 
+#include "c_generic/string.h"
+
 // ACPI
 #include "acpi/acpi.h"
+
+// Filesystem
+#include "filesystem/vfs/vnode.h"
+#include "filesystem/vfs/file.h"
+#include "filesystem/vfs/vfs.h"
+#include "filesystem/vfs/mount.h"
+//
+#include "filesystem/fs/tarfs/tarfs.h"
 
 // INIT
 #include "pit.h"

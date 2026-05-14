@@ -18,6 +18,7 @@ mkdir -p iso_root
 # Copy the relevant files over.
 mkdir -p iso_root/boot
 cp -v bin/reddyos iso_root/boot/
+cp -v bin/initrd.tar iso_root/boot/
 mkdir -p iso_root/boot/limine
 cp -v ../limine.conf limine-binary/limine-bios.sys limine-binary/limine-bios-cd.bin \
       limine-binary/limine-uefi-cd.bin iso_root/boot/limine/

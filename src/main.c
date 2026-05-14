@@ -28,7 +28,21 @@ void task_a(void)
 
 void task_b(void)
 {
-    terminal_write("Task B\n");
+    file_t file;
+
+    if (vfs_open("test.txt", &file) == 0)
+    {
+        char buf[128];
+
+        int n = vfs_read(&file, buf, sizeof(buf)-1);
+
+        buf[n] = 0;
+
+        terminal_write(buf);
+        terminal_write("\n");
+    } else {
+        terminal_write("Failed to open test.txt\n");
+    }
 }
 
 void kmain(void) {
@@ -61,12 +75,17 @@ void kmain(void) {
     lapic_init();
     ioapic_init();
     __asm__ volatile("sti");
-    scheduler_init();
-
+    // Interrupts
     ioapic_redirect_irq(0, 32); // PIT
     ioapic_redirect_irq(1, 33); // Keyboard
 
     irq_register_handler(32, timer_handler);
+
+    // TarFS
+    tarsf_limine_init();
+
+    // Initialize the scheduler
+    scheduler_init();
 
     task_t* a = task_create(task_a);
     task_t* b = task_create(task_b);
@@ -74,10 +93,9 @@ void kmain(void) {
     scheduler_add(a);
     scheduler_add(b);
 
-    terminal_write("Rawr\n");
-    // schedule();
-    lapic_timer_start();
 
+    // Finally start the timer
+    lapic_timer_start();
 
     // We're done, just hang...
     hcf();

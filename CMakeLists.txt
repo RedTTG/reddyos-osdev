@@ -142,6 +142,27 @@ set_target_properties(reddyos PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/dist/bin"
 )
 
+# Build the Limine tarfs initrd from files/ into dist/root/ and package it as
+# dist/bin/initrd.tar for the ISO build step.
+file(GLOB_RECURSE INITRD_ROOT_FILES CONFIGURE_DEPENDS
+        "${CMAKE_SOURCE_DIR}/files/*"
+)
+
+set(INITRD_ROOT_DIR "${CMAKE_SOURCE_DIR}/dist/root")
+set(INITRD_TAR "${CMAKE_SOURCE_DIR}/dist/bin/initrd.tar")
+
+add_custom_command(
+        OUTPUT "${INITRD_TAR}"
+        COMMAND "${CMAKE_COMMAND}" -E rm -rf "${INITRD_ROOT_DIR}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${INITRD_ROOT_DIR}"
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_SOURCE_DIR}/files" "${INITRD_ROOT_DIR}"
+        COMMAND tar -cf "${INITRD_TAR}" -C "${INITRD_ROOT_DIR}" .
+        DEPENDS ${INITRD_ROOT_FILES}
+        VERBATIM
+)
+
+add_custom_target(initrd_tar ALL DEPENDS "${INITRD_TAR}")
+
 # Add linker script as a dependency
 set_target_properties(reddyos PROPERTIES
         LINK_DEPENDS "${CMAKE_SOURCE_DIR}/linker.lds"
