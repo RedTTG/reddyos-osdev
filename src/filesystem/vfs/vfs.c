@@ -9,6 +9,10 @@ int vfs_open(const char* path, file_t* out)
 
     vnode_t** children = node->internal;
 
+    // Handle paths starting with /
+    if (path[0] == '/')
+        path++;
+
     for (int i = 0; children[i]; i++)
     {
         if (!strcmp(children[i]->name, path))

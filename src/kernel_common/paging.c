@@ -9,6 +9,13 @@ static uint64_t get_cr3(void)
 
 void map_page(uint64_t virt, uint64_t phys, uint64_t flags)
 {
+    // terminal_write("Mapping page: virt=");
+    // terminal_write_hex_u64(virt);
+    // terminal_write(" phys=");
+    // terminal_write_hex_u64(phys);
+    // terminal_write(" flags=");
+    // terminal_write_hex_u64(flags);
+    // terminal_write("\n");
     virt &= ~0xFFFULL;
     phys &= ~0xFFFULL;
 

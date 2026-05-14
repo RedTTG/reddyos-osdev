@@ -30,19 +30,26 @@ void task_b(void* arg)
 {
     file_t file;
 
-    if (vfs_open("test.txt", &file) == 0)
+    if (vfs_open("/bin/init", &file) == 0)
     {
-        char buf[128];
-
-        int n = vfs_read(&file, buf, sizeof(buf)-1);
-
-        buf[n] = 0;
-
-        terminal_write(buf);
+        elf_info_t info = elf_load(&file);
+        terminal_write("Elf entry address: ");
+        terminal_write_hex_u64(info.entry);
+        terminal_write(" base address: ");
+        terminal_write_hex_u64(info.base);
         terminal_write("\n");
+
+        // LOAD THE PROCESS :)
     } else {
-        terminal_write("Failed to open test.txt\n");
+        panic("Failed to open /bin/init");
     }
+}
+
+void task_c(void* arg) // USER-SPACE FUNC
+{
+    int x = 5;
+    int y = x * 10;
+    int z = y + 2;
 }
 
 void kmain(void) {

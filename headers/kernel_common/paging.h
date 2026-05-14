@@ -13,6 +13,10 @@
 #define PD_INDEX(x)   (((x) >> 21) & 0x1FF)
 #define PT_INDEX(x)   (((x) >> 12) & 0x1FF)
 
+#define USER_CODE_BASE   0x400000
+#define USER_STACK_TOP   0x70000000
+#define USER_HEAP_BASE   0x80000000
+
 #define VIRT(p) ((void*)((uint64_t)(p) + hhdm_request.response->offset))
 
 void map_page(uint64_t virt, uint64_t phys, uint64_t flags);

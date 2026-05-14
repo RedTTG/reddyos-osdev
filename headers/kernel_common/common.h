@@ -35,6 +35,7 @@
 #include "memory/pmm.h"
 #include "paging.h"
 #include "terminal.h"
+#include "elf.h"
 
 // C generics
 #include "io.h"

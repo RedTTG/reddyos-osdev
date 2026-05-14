@@ -1,7 +1,6 @@
 #include  "common.h"
-#define THREAD_STACK_SIZE 4096
 
-static uint64_t next_pid = 1;
+static uint64_t next_tid = 1;
 
 extern thread_t* current_thread;
 
@@ -22,8 +21,8 @@ static __attribute__((noreturn)) void task_bootstrap(void* arg)
         __asm__ volatile("hlt");
 }
 
-void setup_initial_stack(thread_t* thread, void (*entry)(void* arg), void* arg) {
-    uint64_t* stack = (uint64_t*)(thread->stack + THREAD_STACK_SIZE);
+void setup_kernel_stack(thread_t* thread, void (*entry)(void* arg), void* arg) {
+    uint64_t* stack = (uint64_t*)(thread->kernel_stack + PAGE_SIZE);
 
     // instruction pointer for RET
     *(--stack) = (uint64_t)entry;
@@ -36,30 +35,55 @@ void setup_initial_stack(thread_t* thread, void (*entry)(void* arg), void* arg) 
     *(--stack) = 0;
     *(--stack) = 0;
 
-// RIP
-// RBX
-// RBP
-// R12
-// R13
-// R14
-// R15
+    thread->rsp = (uint64_t)stack;
+}
+
+void setup_user_stack(thread_t* thread, void (*entry)(void* arg), void* arg) {
+    uint64_t* stack = (uint64_t*)(thread->kernel_stack + PAGE_SIZE);
+
+    // instruction pointer for RET
+    *(--stack) = (uint64_t)thread->user_stack;
+    *(--stack) = (uint64_t)entry;
+    *(--stack) = (uint64_t)arg;
+    *(--stack) = (uint64_t)thread_entry_user;
+    *(--stack) = 0;
+    *(--stack) = 0;
+    *(--stack) = 0;
+    *(--stack) = 0;
+    *(--stack) = 0;
+    *(--stack) = 0;
 
     thread->rsp = (uint64_t)stack;
 }
 
-thread_t* thread_create(void (*entry)(void* arg))
+thread_t* thread_create_base(void (*entry)(void* arg))
 {
     thread_t* thread = pmm_alloc_virt_page();
 
-    thread->tid = next_pid++;
-
-    thread->stack = (uint8_t*)pmm_alloc_virt_page();
-
+    thread->tid = next_tid++;
+    thread->kernel_stack = (uint8_t*)pmm_alloc_virt_page();
     thread->entry = entry;
-
-    setup_initial_stack(thread, &task_bootstrap, 0);
-
     thread->next = 0;
 
+    return thread;
+}
+
+thread_t* thread_create(void (*entry)(void* arg))
+{
+    thread_t* thread = thread_create_base(entry);
+    setup_kernel_stack(thread, &task_bootstrap, 0);
+    return thread;
+}
+
+thread_t* user_thread_create(void (*entry)(void* arg)) {
+    thread_t* thread = thread_create_base(entry);
+    const uint64_t user_page_virt = (uint64_t)pmm_alloc_virt_page();
+    map_page(
+        user_page_virt,
+        (uint64_t)memphys(user_page_virt),
+        PAGE_USER | PAGE_WRITABLE | PAGE_PRESENT
+    );
+    thread->user_stack = (void*)(user_page_virt + PAGE_SIZE);
+    setup_user_stack(thread, entry, 0);
     return thread;
 }
