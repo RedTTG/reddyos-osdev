@@ -41,5 +41,5 @@
 #include "itoa.h"
 
 // Scheduler
-#include "scheduler/task.h"
+#include "scheduler/thread.h"
 #include "scheduler/scheduler.h"

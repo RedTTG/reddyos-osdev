@@ -9,7 +9,7 @@ typedef struct context
     uint64_t rbx, rbp, rsp, rax;
 } context_t;
 
-typedef struct task
+typedef struct thread
 {
     context_t context;
 
@@ -17,7 +17,7 @@ typedef struct task
     uint8_t* stack;
     uint64_t id;
 
-    struct task* next;
-} task_t;
+    struct thread* next;
+} thread_t;
 
-task_t* task_create(void (*entry)(void));
+thread_t* thread_create(void (*entry)(void));

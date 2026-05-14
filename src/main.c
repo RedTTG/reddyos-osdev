@@ -87,8 +87,8 @@ void kmain(void) {
     // Initialize the scheduler
     scheduler_init();
 
-    task_t* a = task_create(task_a);
-    task_t* b = task_create(task_b);
+    thread_t* a = thread_create(task_a);
+    thread_t* b = thread_create(task_b);
 
     scheduler_add(a);
     scheduler_add(b);

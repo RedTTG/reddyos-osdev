@@ -1,12 +1,12 @@
 #include "common.h"
 
-task_t* current_task = 0;
-task_t* task_list = 0;
+thread_t* current_thread = 0;
+thread_t* thread_list = 0;
 
 void scheduler_init(void) {
-    static task_t bootstrap_task = {0};
+    static thread_t bootstrap_task = {0};
 
-    current_task = &bootstrap_task;
+    current_thread = &bootstrap_task;
 }
 
 extern void context_switch(
@@ -14,29 +14,29 @@ extern void context_switch(
     context_t* new
 );
 
-void scheduler_add(task_t* task)
+void scheduler_add(thread_t* thread)
 {
-    if (!task_list)
+    if (!thread_list)
     {
-        task_list = task;
+        thread_list = thread;
         return;
     }
 
-    task_t* iter = task_list;
+    thread_t* iter = thread_list;
 
     while (iter->next)
         iter = iter->next;
 
-    iter->next = task;
+    iter->next = thread;
 }
 
 void schedule()
 {
-    if (!current_task)
+    if (!current_thread)
         return;
 
-    task_t* prev = current_task;
-    task_t* next = current_task->next ? current_task->next : task_list;
+    thread_t* prev = current_thread;
+    thread_t* next = current_thread->next ? current_thread->next : thread_list;
 
     if (!next || next == prev)
         return;
@@ -47,13 +47,13 @@ void schedule()
     // terminal_write_u64(next->id);
     // terminal_write("\n");
 
-    current_task = next;
+    current_thread = next;
 
-    // terminal_write("Switching to task ");
-    // terminal_write_u64(current_task->id);
+    // terminal_write("Switching to thread ");
+    // terminal_write_u64(current_thread->id);
     // terminal_write("\n");
     context_switch(
         &prev->context,
-        &current_task->context
+        &current_thread->context
     );
 }
