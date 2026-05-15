@@ -95,7 +95,7 @@ file(GLOB_RECURSE ASM_GAS_SOURCES
 
 # Configure NASM compiler
 set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
-set(CMAKE_ASM_NASM_FLAGS "-f elf64 -g -F dwarf -Wall")
+set(CMAKE_ASM_NASM_FLAGS "-f elf64 -g -F dwarf -Wall -I${CMAKE_SOURCE_DIR}/headers/asm")
 
 # Mark NASM files with appropriate language
 set_source_files_properties(${ASM_NASM_SOURCES}

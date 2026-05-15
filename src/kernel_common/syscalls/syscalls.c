@@ -8,51 +8,30 @@ extern thread_t* current_thread;
 
 void syscall_init(void)
 {
-    // -----------------------------------
-    // Setup GS base for swapgs
-    // -----------------------------------
-
-    // IA32_KERNEL_GSBASE will be swapped in on syscall entry via swapgs
+    // Setup GS base
     wrmsr(IA32_KERNEL_GSBASE, (uint64_t)&percpu_data);
 
 
-
-    // -----------------------------------
-    // Enable SYSCALL/SYSRET
-    // -----------------------------------
-
+    // Enable syscalls
     wrmsr(
         IA32_EFER,
         rdmsr(IA32_EFER) | EFER_SCE
     );
 
-    // -----------------------------------
-    // STAR - Setup CS selectors
-    // -----------------------------------
-
-    // STAR format:
-    // Bits 32-47: Kernel CS (and kernel DS is kernel CS + 8)
-    // Bits 48-63: User code CS (and user DS is user CS + 8)
-
+    // Star selectors
     uint64_t star =
         ((uint64_t)0x08 << 32) |   // kernel CS at 0x08
         ((uint64_t)0x1B << 48);    // user CS at 0x1B (ring-3 selector)
 
     wrmsr(IA32_STAR, star);
 
-    // -----------------------------------
-    // syscall RIP
-    // -----------------------------------
-
+    // Set syscall entry LSTAR
     wrmsr(
         IA32_LSTAR,
         (uint64_t)syscall_entry
     );
 
-    // -----------------------------------
-    // clear flags on syscall entry
-    // -----------------------------------
-    // This clears the IF (Interrupt Flag) bit, disabling interrupts
+    // Disable interrupts on entering syscall entry
     wrmsr(
         IA32_FMASK,
         (1 << 9) // IF

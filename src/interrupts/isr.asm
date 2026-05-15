@@ -1,5 +1,6 @@
 global isr_stub_table
 extern isr_handler
+%include "macros.inc"
 
 %assign i 0
 %rep 32
@@ -61,6 +62,7 @@ ISR_ERR 30
 ISR_NOERR 31
 
 isr_common:
+    swapgs_if_necessary;
     push rax
     push rbx
     push rcx
@@ -97,6 +99,7 @@ isr_common:
     pop rax
 
     add rsp, 16
+    swapgs_if_necessary;
     iretq
 
 section .note.GNU-stack noalloc noexec nowrite progbits

@@ -4,16 +4,6 @@ extern syscall_handler, current_thread
 section .text
 
 syscall_entry:
-    ; At this point:
-    ; - RCX contains the user return address (for sysretq)
-    ; - R11 contains user RFLAGS
-    ; - GS base is still pointing to user space (swapgs not done yet)
-    ;
-    ; Syscall arguments in registers (x86-64 syscall ABI):
-    ; - RAX: syscall number
-    ; - RDI, RSI, RDX, R10, R8, R9: arguments 1-6
-
-    ; Swap GS base from user to kernel
     swapgs
 
     ; Save user registers to percpu_data for later restoration
@@ -43,10 +33,6 @@ syscall_entry:
     sub rsp, 0x1000
 
 .stack_ready:
-    ; Now we have a valid kernel RSP
-    ; Build syscall_args_t struct on the stack
-    ; struct layout: rax(0), rdi(8), rsi(16), rdx(24), r10(32), r8(40), r9(48) = 56 bytes
-
     ; Allocate space for syscall_args_t (56 bytes)
     sub rsp, 56
 
@@ -63,32 +49,17 @@ syscall_entry:
     ; Pass pointer to syscall_args_t as first argument (RDI)
     mov rdi, rsp
 
-    ; Call the C handler (syscall_handler(syscall_args_t* args))
     call syscall_handler
-
-    ; After handler returns, RAX contains the return value
-    ; (syscall_handler modified args->rax and we need to copy it back)
-    ; The struct is still at [rsp + 0], where args->rax is at offset 0
     mov rax, [rsp + 0]
 
-    ; Clean up the syscall_args_t from the stack
     add rsp, 56
 
-    ; Now prepare to return to user space
-    ; We need to restore RCX, R11, and RSP from percpu_data.
-    ; Use RBX for user RSP because syscall_handler must preserve callee-saved regs.
     mov rbx, [gs:0]           ; user RSP (stable across the C call)
     mov rcx, [gs:8]           ; user RCX (for return address)
     mov r11, [gs:16]          ; user R11 (for RFLAGS)
 
-    ; Swap GS back to user
     swapgs
 
-    ; Now restore user RSP from the saved register
     mov rsp, rbx
 
-    ; Return to user space with sysretq
-    ; RCX = user RIP, R11 = user RFLAGS, RSP = user RSP, DS/ES = user DS
     sysret
-
-section .note.GNU-stack noalloc noexec nowrite progbits
