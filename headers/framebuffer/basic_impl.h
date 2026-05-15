@@ -74,7 +74,7 @@ void animate_square(void)
 
     fb_draw_square(square_x, square_y, FB_RED);
 }
-void cube_init(struct limine_framebuffer *framebuffer) {
+void square_init(struct limine_framebuffer *framebuffer) {
     fb_ptr = framebuffer->address;
     fb_stride = framebuffer->pitch / sizeof(uint32_t);
     fb_width = framebuffer->width;

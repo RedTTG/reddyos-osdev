@@ -58,7 +58,7 @@ void setup_user_stack(thread_t* thread, void (*entry)(void* arg), void* arg) {
 
 thread_t* thread_create_base(void (*entry)(void* arg))
 {
-    thread_t* thread = pmm_alloc_virt_page();
+    thread_t* thread = kmalloc(sizeof(thread_t));
 
     if (!thread)
         return 0;
@@ -66,10 +66,10 @@ thread_t* thread_create_base(void (*entry)(void* arg))
     memset(thread, 0, sizeof(*thread));
 
     thread->tid = next_tid++;
-    thread->kernel_stack = (uint8_t*)pmm_alloc_virt_page();
+    thread->kernel_stack = (uint8_t*)kmalloc(PAGE_SIZE);
     if (!thread->kernel_stack)
     {
-        pmm_free_virt_page(thread);
+        kfree(thread);
         return 0;
     }
 

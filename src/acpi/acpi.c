@@ -22,7 +22,7 @@ acpi_sdt_header_t* acpi_find_table(const char* sig)
     if (rsdp->revision >= 2)
     {
         const xsdp_t* xsdp = (xsdp_t*)rsdp;
-        const xsdt_t* xsdt = memvirt((uint64_t)xsdp->xsdt_address);
+        const xsdt_t* xsdt = (xsdt_t*)memvirt(xsdp->xsdt_address);
 
         const int entries =
             (xsdt->header.length - sizeof(acpi_sdt_header_t))
@@ -39,8 +39,7 @@ acpi_sdt_header_t* acpi_find_table(const char* sig)
     }
     else
     {
-        const rsdt_t* rsdt =
-            memvirt((uint64_t)rsdp->rsdt_address);
+        const rsdt_t* rsdt = (rsdt_t*) memvirt(rsdp->rsdt_address);
 
         const int entries =
             (rsdt->header.length - sizeof(acpi_sdt_header_t))
@@ -48,8 +47,7 @@ acpi_sdt_header_t* acpi_find_table(const char* sig)
 
         for (int i = 0; i < entries; i++)
         {
-            acpi_sdt_header_t* hdr =
-                (acpi_sdt_header_t*) memvirt((uint64_t)rsdt->tables[i]);
+            acpi_sdt_header_t* hdr = (acpi_sdt_header_t*) memvirt(rsdt->tables[i]);
 
             if (!memcmp(hdr->signature, sig, 4))
                 return hdr;

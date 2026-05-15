@@ -50,14 +50,3 @@ static volatile uint64_t limine_requests_start_marker[] = LIMINE_REQUESTS_START_
 
 __attribute__((used, section(".limine_requests_end")))
 static volatile uint64_t limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARKER;
-
-
-
-void* memvirt(const uint64_t phys)
-{
-    return (void*)(phys + hhdm_request.response->offset);
-}
-void* memphys(const uint64_t virt)
-{
-    return (void*)(virt - hhdm_request.response->offset);
-}

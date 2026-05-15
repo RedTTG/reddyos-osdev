@@ -20,6 +20,15 @@ void task_a(void* arg)
 {
     (void)arg;
     // ReSharper disable once CppDFAEndlessLoop
+
+    // Ensure we got a framebuffer.
+    if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
+        hcf();
+    }
+
+    // Fetch the first framebuffer.
+    square_init(framebuffer_request.response->framebuffers[0]);
+
     while (1) {
         animate_square();
     }
@@ -49,6 +58,29 @@ void task_c(void* arg) // USER-SPACE FUNC
     (void)y;
 }
 
+void init_interrupts(void) {
+    // Interrupts and IRQs remap
+    idt_init();
+    irq_init();
+    irq_install();
+
+    acpi_init();
+    lapic_init();
+    ioapic_init();
+    __asm__ volatile("sti");
+
+    // Interrupts
+    ioapic_redirect_irq(0, 32); // PIT
+    ioapic_redirect_irq(1, 33); // Keyboard
+}
+
+void init_memory(void) {
+    // Paging and physical memory management
+    pmm_init();
+    vmm_init();
+    terminal_write("Memory initialized!\n");
+}
+
 void kmain(void) {
     // Ensure the bootloader actually understands our base revision (see spec).
     if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {
@@ -57,31 +89,14 @@ void kmain(void) {
 
     terminal_init();
     terminal_write("Booted\n");
+    terminal_write("CR3 addr: ");
+    uint64_t cr3 = (uint64_t)memvirt(paging_current_cr3());
+    terminal_write_hex_u64(cr3);
+    terminal_write("\n");
 
-
-    // Ensure we got a framebuffer.
-    if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
-        hcf();
-    }
-
-    // Fetch the first framebuffer.
-    cube_init(framebuffer_request.response->framebuffers[0]);
-
-    // Interrupts and IRQs remap
-    idt_init();
-    irq_init();
-    irq_install();
-
-    // ACPI
-    pmm_init();
-    paging_init();
-    acpi_init();
-    lapic_init();
-    ioapic_init();
-    __asm__ volatile("sti");
-    // Interrupts
-    ioapic_redirect_irq(0, 32); // PIT
-    ioapic_redirect_irq(1, 33); // Keyboard
+    // Initialize
+    init_memory();
+    init_interrupts();
 
     irq_register_handler(32, timer_handler);
 
