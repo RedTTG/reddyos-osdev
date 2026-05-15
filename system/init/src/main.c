@@ -2,22 +2,20 @@ static long sys_test(long val)
 {
     long ret;
     __asm__ volatile (
-        "mov $1, %%rax\n"
-        "mov %1, %%rdi\n"
         "syscall\n"
-        "mov %%rax, %0\n"
-        : "=r"(ret)
-        : "r"(val)
-        : "rax", "rcx", "r11"
+        : "=a"(ret)           // Output: RAX contains return value
+        : "a"(1),             // RAX = syscall number (1)
+          "D"(val)            // RDI = argument (val)
+        : "rcx", "r11"        // Clobbered by syscall
     );
     return ret;
 }
 
 void _start(void)
 {
-    long i = 0;
+    long i = 1;
     for (;;) {
         i++;
-        // sys_test(i);
+        i = sys_test(i);
     }
 }
