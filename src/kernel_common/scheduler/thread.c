@@ -42,8 +42,8 @@ void setup_user_stack(thread_t* thread, void (*entry)(void*)) {
     uint64_t* stack = (uint64_t*)(thread->kernel_stack + PAGE_SIZE);
 
     // instruction pointer for RET
-    *(--stack) = (uint64_t)thread->user_stack;
     *(--stack) = 0x202; // Rflags
+    *(--stack) = (uint64_t)thread->user_stack;
     *(--stack) = (uint64_t)entry;
     // thread_entry_user ^
     *(--stack) = (uint64_t)thread_entry_user;

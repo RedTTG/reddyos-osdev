@@ -37,7 +37,7 @@ void syscall_init(void)
 
     uint64_t star =
         ((uint64_t)0x08 << 32) |   // kernel CS at 0x08
-        ((uint64_t)0x18 << 48);    // user CS at 0x18 (not 0x1B!)
+        ((uint64_t)0x1B << 48);    // user CS at 0x1B (ring-3 selector)
 
     wrmsr(IA32_STAR, star);
 

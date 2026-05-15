@@ -11,7 +11,8 @@
 
 typedef struct {
     uint64_t user_rsp;         // Offset 0: User RSP (saved at syscall entry)
-    uint64_t padding;          // Offset 8: Padding/reserved
+    uint64_t user_rcx;         // Offset 8: User RCX (for sysretq)
+    uint64_t user_r11;         // Offset 16: User R11 (for sysretq)
 } percpu_data_t;
 
 typedef struct {

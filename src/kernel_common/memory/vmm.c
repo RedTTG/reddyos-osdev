@@ -19,6 +19,17 @@ void vmm_init(void) {
     kernel_address_space.pml4 = (uint64_t*)VIRT(kernel_address_space.cr3 & ~0xFFF);
 }
 
+void paging_copy_kernel_half(address_space_t* as)
+{
+    // Copy the shared kernel half (upper 256 PML4 entries) from the master
+    // kernel page table so that all kernel text/data/interrupt handlers remain
+    // mapped identically in every process address space.
+    for (int i = 256; i < 512; i++)
+    {
+        as->pml4[i] = kernel_address_space.pml4[i];
+    }
+}
+
 uint64_t paging_current_cr3(void)
 {
     return get_cr3();
@@ -173,11 +184,8 @@ address_space_t paging_create_address_space(void)
     // 1. allocate new PML4
     as.pml4 = phys_to_virt((uint64_t)pmm_alloc_page());
     memset(as.pml4, 0, 4096);
-    // 2. copy kernel half (upper 256 entries)
-    for (int i = 256; i < 512; i++)
-    {
-        as.pml4[i] = kernel_address_space.pml4[i];
-    }
+    // 2. copy the shared kernel half (upper 256 entries)
+    paging_copy_kernel_half(&as);
 
     // 3. convert to physical CR3
     as.cr3 = virt_to_phys((uint64_t)as.pml4);
@@ -277,5 +285,6 @@ void* vmm_translate(address_space_t* as, uint64_t virt)
 
 uint64_t vmm_map_page(const uint64_t phys, uint64_t flags)
 {
+    (void)flags;
     return phys; // placeholder for future per-process allocator
 }

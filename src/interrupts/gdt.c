@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include "common.h"
 
 // Minimal GDT + TSS setup to provide a kernel stack (rsp0) so that when
 // interrupts occur while CPL=3 the CPU switches to a known kernel stack.
@@ -21,6 +20,9 @@ static struct tss_struct tss;
 // Per-CPU kernel interrupt stack
 __attribute__((aligned(16))) static uint8_t kernel_irq_stack[8192];
 
+// Emergency stack for double faults / catastrophic transition failures.
+__attribute__((aligned(16))) static uint8_t double_fault_ist_stack[8192];
+
 void gdt_install(void)
 {
     // Predefined GDT entries: null, kernel code, kernel data, user code, user data
@@ -35,6 +37,7 @@ void gdt_install(void)
     // Initialize TSS: set rsp0 to top of our kernel_irq_stack
     for (int i = 0; i < (int)sizeof(tss); i++) ((uint8_t*)&tss)[i] = 0;
     tss.rsp0 = (uint64_t)(kernel_irq_stack + sizeof(kernel_irq_stack));
+    tss.ist[0] = (uint64_t)(double_fault_ist_stack + sizeof(double_fault_ist_stack));
 
     // Build TSS descriptor (uses two entries)
     uint64_t tss_base = (uint64_t)&tss;
