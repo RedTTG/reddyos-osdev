@@ -43,8 +43,8 @@ static uint64_t segment_flags(uint32_t elf_flags)
     if (elf_flags & PF_W)
         flags |= PAGE_WRITABLE;
 
-    if (!(elf_flags & PF_X))
-        flags |= PAGE_NOEXEC;
+    // if (!(elf_flags & PF_X))
+    //     flags |= PAGE_NOEXEC;
 
     return flags;
 }
@@ -122,8 +122,15 @@ int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_inf
         const uint64_t map_start = align_down(ph.vaddr);
         const uint64_t map_end = align_up(ph.vaddr + ph.memsz);
         const uint64_t final_flags = segment_flags(ph.flags);
-        const uint64_t load_flags = final_flags | PAGE_WRITABLE;
         const uint64_t page_count = (map_end - map_start) >> 12;
+
+        terminal_write("Final flags: ");
+        if (final_flags & PAGE_WRITABLE) terminal_write("WRITABLE ");
+        if (final_flags & PAGE_USER) terminal_write("USER ");
+        if (final_flags & PAGE_WTHRU) terminal_write("WTHRU ");
+        if (final_flags & PAGE_NOCACHE) terminal_write("NOCACHE ");
+        if (final_flags & PAGE_NX) terminal_write("NX ");
+        terminal_write("\n");
 
         if (page_count == 0)
             continue;
@@ -137,12 +144,11 @@ int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_inf
             if (!phys_pages[page])
                 goto fail;
 
-            // WRITEABLE IS ENSURED
             vmm_map(
                 as,
                 virt,
                 phys_pages[page],
-                load_flags
+                final_flags
             );
         }
 
@@ -155,23 +161,6 @@ int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_inf
 
         if (ph.memsz > ph.filesz)
             memset(vmm_translate(as, ph.vaddr + ph.filesz), 0, ph.memsz - ph.filesz);
-
-        for (uint64_t page = 0; page < page_count; page++) {
-            // DEBUG: Dump the first 5 bytes of the this page
-            // for (size_t b = 0; b < 5; b++) {
-            //     uint8_t byte = *((uint8_t*)(map_start + (page << 12) + b));
-            //     terminal_write_hex_u8(byte);
-            //     terminal_write(" ");
-            // }
-
-            // NOT WRITEABLE
-            vmm_map(
-                as,
-                map_start + (page << 12),
-                phys_pages[page],
-                final_flags
-            );
-        }
     }
 
     return 0;
