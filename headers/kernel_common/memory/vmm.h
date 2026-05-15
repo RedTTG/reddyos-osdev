@@ -11,6 +11,10 @@
 // #define PAGE_MASK 0xFFFFFFFFFFFFF000ULL
 #define PAGE_MASK 0x000FFFFFFFFFF000ULL
 
+#define USER_CODE_BASE   0x400000
+#define USER_STACK_TOP   0x70000000
+#define USER_HEAP_BASE   0x80000000
+
 #define PML4_INDEX(x) (((x) >> 39) & 0x1FF)
 #define PDPT_INDEX(x) (((x) >> 30) & 0x1FF)
 #define PD_INDEX(x)   (((x) >> 21) & 0x1FF)
@@ -19,7 +23,13 @@
 #define memphys virt_to_phys
 #define VIRT(p) ((void*)((uint64_t)(p) + hhdm_request.response->offset))
 
-extern uint64_t* kernel_pml4;
+typedef struct address_space
+{
+    uint64_t* pml4;   // HHDM pointer
+    uint64_t cr3;     // physical address for CPU
+} address_space_t;
+
+extern address_space_t kernel_address_space;
 
 void vmm_init(void);
 
@@ -30,14 +40,18 @@ uint64_t paging_current_cr3(void);
 uint64_t* phys_to_virt(uint64_t phys);
 uint64_t virt_to_phys(uint64_t virt);
 
-void vmm_map(const uint64_t* pml4, uint64_t virt, uint64_t phys, uint64_t flags);
-void vmm_unmap(const uint64_t* pml4, const uint64_t virt);
-uint64_t vmm_virt_to_phys(const uint64_t* pml4, const uint64_t virt);
+void vmm_map(const address_space_t* address_space, uint64_t virt, uint64_t phys, uint64_t flags);
+void vmm_unmap(const address_space_t* address_space, const uint64_t virt);
+uint64_t vmm_virt_to_phys(const address_space_t* address_space, const uint64_t virt);
 
 inline void map_page(uint64_t virt, uint64_t phys, uint64_t flags) {
-    vmm_map(kernel_pml4, virt, phys, flags);
+    vmm_map(&kernel_address_space, virt, phys, flags);
 }
 void unmap_page(uint64_t virt);
 
+address_space_t paging_create_address_space(void);
+void paging_destroy_address_space(address_space_t* as);
+
+void* vmm_translate(address_space_t* as, uint64_t virt);
 
 uint64_t vmm_map_page(uint64_t phys, uint64_t flags);

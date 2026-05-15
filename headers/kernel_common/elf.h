@@ -45,4 +45,4 @@ typedef struct {
 } elf_phdr_t;
 
 int elf_read_info(file_t* file, elf_info_t* info);
-int elf_load_into_cr3(uint64_t cr3, file_t* file, const elf_info_t* info);
+int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_info_t* info);

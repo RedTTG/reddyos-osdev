@@ -92,12 +92,12 @@ int elf_read_info(file_t* file, elf_info_t* info)
     return 0;
 }
 
-int elf_load_into_cr3(uint64_t cr3, file_t* file, const elf_info_t* info)
+int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_info_t* info)
 {
     elf_header_t header;
     uint64_t old_cr3;
 
-    if (!cr3 || !file || !info)
+    if (!as || !file || !info)
         return -1;
 
     if (read_elf_header(file, &header) < 0)
@@ -105,9 +105,6 @@ int elf_load_into_cr3(uint64_t cr3, file_t* file, const elf_info_t* info)
 
     if (info->entry != header.entry)
         return -1;
-
-    old_cr3 = paging_current_cr3();
-    paging_load_cr3(cr3);
 
     for (uint16_t i = 0; i < header.phnum; i++) {
         elf_phdr_t ph;
@@ -141,7 +138,8 @@ int elf_load_into_cr3(uint64_t cr3, file_t* file, const elf_info_t* info)
                 goto fail;
 
             // WRITEABLE IS ENSURED
-            map_page(
+            vmm_map(
+                as,
                 virt,
                 phys_pages[page],
                 load_flags
@@ -152,11 +150,11 @@ int elf_load_into_cr3(uint64_t cr3, file_t* file, const elf_info_t* info)
         //memset((void*)map_start, 0xFF, map_end - map_start);
 
         file->offset = ph.offset;
-        if (read_exact(file, (void*)ph.vaddr, ph.filesz) < 0)
+        if (read_exact(file, vmm_translate(as, ph.vaddr), ph.filesz) < 0)
             goto fail;
 
         if (ph.memsz > ph.filesz)
-            memset((void*)(ph.vaddr + ph.filesz), 0, ph.memsz - ph.filesz);
+            memset(vmm_translate(as, ph.vaddr + ph.filesz), 0, ph.memsz - ph.filesz);
 
         for (uint64_t page = 0; page < page_count; page++) {
             // DEBUG: Dump the first 5 bytes of the this page
@@ -167,7 +165,8 @@ int elf_load_into_cr3(uint64_t cr3, file_t* file, const elf_info_t* info)
             // }
 
             // NOT WRITEABLE
-            map_page(
+            vmm_map(
+                as,
                 map_start + (page << 12),
                 phys_pages[page],
                 final_flags
@@ -175,10 +174,8 @@ int elf_load_into_cr3(uint64_t cr3, file_t* file, const elf_info_t* info)
         }
     }
 
-    paging_load_cr3(old_cr3);
     return 0;
 
 fail:
-    paging_load_cr3(old_cr3);
     return -1;
 }

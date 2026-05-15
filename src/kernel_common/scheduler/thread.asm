@@ -26,7 +26,6 @@ thread_entry_kernel:
     ret
 thread_entry_user:
     cli ; disable interrupts
-    pop rdi ; arg
     pop rcx ; future user rip
     pop rdx ; future user rsp
 

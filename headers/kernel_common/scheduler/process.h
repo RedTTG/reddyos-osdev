@@ -4,7 +4,7 @@
 typedef struct thread thread_t;
 
 typedef struct process {
-    uint64_t cr3;
+    address_space_t address_space;
 
     uint64_t entry_point;
 

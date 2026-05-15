@@ -50,12 +50,9 @@ void task_b(void* arg)
     scheduler_add(user_thread);
 }
 
-void task_c(void* arg) // USER-SPACE FUNC
+void test_cr3(void* arg)
 {
-    (void)arg;
-    int x = 5;
-    int y = x * 10;
-    (void)y;
+    // uint64_t* cr3 = create
 }
 
 void init_interrupts(void) {
@@ -111,9 +108,11 @@ void kmain(void) {
 
     thread_t* a = thread_create(task_a);
     thread_t* b = thread_create(task_b);
+    thread_t* c = thread_create(test_cr3);
 
     scheduler_add(a);
     scheduler_add(b);
+    scheduler_add(c);
 
 
     // Finally start the timer

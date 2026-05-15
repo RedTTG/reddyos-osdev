@@ -96,7 +96,7 @@ isr_common:
     pop rbx
     pop rax
 
-    add rsp, 16
+    ;add rsp, 16
     iretq
 
 section .note.GNU-stack noalloc noexec nowrite progbits

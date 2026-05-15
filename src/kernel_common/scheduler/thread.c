@@ -38,13 +38,13 @@ void setup_kernel_stack(thread_t* thread, void (*entry)(void* arg), void* arg) {
     thread->rsp = (uint64_t)stack;
 }
 
-void setup_user_stack(thread_t* thread, void (*entry)(void* arg), void* arg) {
+void setup_user_stack(thread_t* thread, void (*entry)(void*)) {
     uint64_t* stack = (uint64_t*)(thread->kernel_stack + PAGE_SIZE);
 
     // instruction pointer for RET
     *(--stack) = (uint64_t)thread->user_stack;
     *(--stack) = (uint64_t)entry;
-    *(--stack) = (uint64_t)arg;
+    // thread_entry_user ^
     *(--stack) = (uint64_t)thread_entry_user;
     *(--stack) = 0;
     *(--stack) = 0;
@@ -52,7 +52,11 @@ void setup_user_stack(thread_t* thread, void (*entry)(void* arg), void* arg) {
     *(--stack) = 0;
     *(--stack) = 0;
     *(--stack) = 0;
-
+    terminal_write("User stack: ");
+    terminal_write_hex_u64((uint64_t)thread->user_stack);
+    terminal_write(" tr: ");
+    terminal_write_hex_u64((uint64_t)vmm_translate(&thread->process->address_space,(uint64_t)thread->user_stack));
+    terminal_write("\n");
     thread->rsp = (uint64_t)stack;
 }
 
@@ -106,6 +110,6 @@ thread_t* user_thread_create(process_t* process) {
     thread->process = process;
     thread->user_stack = (void*)process->user_stack_top;
     process->main_thread = thread;
-    setup_user_stack(thread, (void (*)(void*))process->entry_point, 0);
+    setup_user_stack(thread, (void (*)(void*))process->entry_point);
     return thread;
 }
