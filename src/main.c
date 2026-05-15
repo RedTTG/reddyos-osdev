@@ -1,5 +1,6 @@
 #include "common.h"
 #include "framebuffer/basic_impl.h"
+#include "interrupts/gdt.h"
 
 // Halt and catch fire function.
 static __attribute__((noreturn)) void hcf(void)
@@ -56,6 +57,10 @@ void test_cr3(void* arg)
 }
 
 void init_interrupts(void) {
+    // Ensure GDT and TSS are installed so the CPU will switch to a safe
+    // kernel stack (rsp0) when interrupts occur from user space.
+    gdt_install();
+
     // Interrupts and IRQs remap
     idt_init();
     irq_init();

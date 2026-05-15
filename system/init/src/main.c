@@ -1,5 +1,6 @@
 void _start(void)
 {
+    volatile int x = 0;
     for (;;)
-        __asm__ volatile ("hlt");
+        x++;
 }
