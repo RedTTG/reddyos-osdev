@@ -29,7 +29,8 @@ thread_entry_user:
     pop rcx ; future user rip
     pop rdx ; future user rsp
 
-    mov r11, 0x202 ; enable interrupts in user mode, set syscall/sysret compatibility mode
+    mov r11, 0x002 ; set syscall/sysret compatibility mode
     mov rsp, rdx ; set user stack pointer
 
+    sti ; enable interrupts
     o64 sysret ; return to user mode, rip = rcx, rsp = rdx, r11 = 0x202
