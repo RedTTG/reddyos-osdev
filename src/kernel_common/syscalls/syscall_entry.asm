@@ -89,6 +89,6 @@ syscall_entry:
 
     ; Return to user space with sysretq
     ; RCX = user RIP, R11 = user RFLAGS, RSP = user RSP, DS/ES = user DS
-    sysretq
+    sysret
 
 section .note.GNU-stack noalloc noexec nowrite progbits

@@ -15,8 +15,7 @@ void syscall_init(void)
     // IA32_KERNEL_GSBASE will be swapped in on syscall entry via swapgs
     wrmsr(IA32_KERNEL_GSBASE, (uint64_t)&percpu_data);
 
-    // IA32_GSBASE is the current GS base (used by kernel initially)
-    wrmsr(IA32_GSBASE, (uint64_t)&percpu_data);
+
 
     // -----------------------------------
     // Enable SYSCALL/SYSRET
