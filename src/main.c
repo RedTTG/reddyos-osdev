@@ -13,7 +13,10 @@ static __attribute__((noreturn)) void hcf(void)
 void timer_handler(const interrupt_frame_t* frame)
 {
     (void)frame;
-    // terminal_write("TIMER\n");
+    if (paging_current_cr3() != paging_kernel_cr3()) {
+        // terminal_write("Restore kernel CR3\n");
+        paging_load_cr3(paging_kernel_cr3());
+    }
     schedule();
 }
 
@@ -48,12 +51,8 @@ void task_b(void* arg)
     if (!user_thread)
         panic("Failed to create user thread for /bin/init");
 
+    terminal_write("Created user thread for /bin/init\n");
     scheduler_add(user_thread);
-}
-
-void test_cr3(void* arg)
-{
-    // uint64_t* cr3 = create
 }
 
 void init_interrupts(void) {
@@ -91,7 +90,7 @@ void kmain(void) {
 
     terminal_init();
     terminal_write("Booted\n");
-    terminal_write("CR3 addr: ");
+    terminal_write("CR3 addr at boot: ");
     uint64_t cr3 = (uint64_t)memvirt(paging_current_cr3());
     terminal_write_hex_u64(cr3);
     terminal_write("\n");
@@ -113,12 +112,11 @@ void kmain(void) {
 
     thread_t* a = thread_create(task_a);
     thread_t* b = thread_create(task_b);
-    thread_t* c = thread_create(test_cr3);
 
     scheduler_add(a);
     scheduler_add(b);
-    scheduler_add(c);
 
+    // task_b(0);
 
     // Finally start the timer
     lapic_timer_start();

@@ -8,7 +8,6 @@ process_t* process_create(const char* filename)
     elf_info_t info = {0};
     process_t* p;
     uint64_t old_cr3 = 0;
-    uint64_t stack_phys = 0;
 
     if (!filename)
         return 0;
@@ -39,34 +38,32 @@ process_t* process_create(const char* filename)
     p->main_thread = 0;
     p->pid = next_pid++;
 
-    void* stack_virt = kmalloc(PAGE_SIZE);
+    void* stack_phys = pmm_alloc_page();
 
-    if (!stack_virt)
+    if (!stack_phys)
     {
         paging_destroy_address_space(&p->address_space);
         kfree(p);
         return 0;
     }
 
-    memset(stack_virt, 0, PAGE_SIZE);
+    memset(VIRT(stack_phys), 0, PAGE_SIZE);
 
     // Map the stack
     vmm_map(
         &p->address_space,
         p->user_stack_bottom,
-        virt_to_phys((uint64_t)stack_virt),
+        (uint64_t)stack_phys,
         PAGE_USER | PAGE_WRITABLE | PAGE_PRESENT
     );
 
-    terminal_write("Writing elf into address space\n");
     if (elf_load_into_address_space(&p->address_space, &file, &info) != 0)
     {
         paging_destroy_address_space(&p->address_space);
         kfree(p);
-        kfree(stack_virt);
+        pmm_free_page(stack_phys);
         return 0;
     }
-    terminal_write("Wrote elf into address space!\n");
 
     return p;
 }

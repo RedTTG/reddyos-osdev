@@ -2,9 +2,9 @@
 
 thread_t* current_thread = 0;
 thread_t* thread_list = 0;
+static thread_t bootstrap_task = {0};
 
 void scheduler_init(void) {
-    static thread_t bootstrap_task = {0};
 
     current_thread = &bootstrap_task;
 }
@@ -60,13 +60,13 @@ void schedule()
 
     current_thread = next;
 
-    if (current_thread->process) {
-        terminal_write("Switching to thread ");
-        terminal_write_u64(current_thread->tid);
-        terminal_write(" of PID ");
-        terminal_write_u64(current_thread->process->pid);
-        terminal_write("\n");
-    }
+    // if (current_thread->process) {
+    //     terminal_write("Switching to thread ");
+    //     terminal_write_u64(current_thread->tid);
+    //     terminal_write(" of PID ");
+    //     terminal_write_u64(current_thread->process->pid);
+    //     terminal_write("\n");
+    // }
 
     arch_switch_thread(
         prev,

@@ -25,12 +25,10 @@ thread_entry_kernel:
     sti
     ret
 thread_entry_user:
-    cli ; disable interrupts
     pop rcx ; future user rip
     pop rdx ; future user rsp
 
-    mov r11, 0x002 ; set syscall/sysret compatibility mode
+    pop r11 ; future user rflags
     mov rsp, rdx ; set user stack pointer
-
-    sti ; enable interrupts
-    o64 sysret ; return to user mode, rip = rcx, rsp = rdx, r11 = 0x202
+    or  r11, 0x200 ; enable interrupts in user mode
+    sysret ; return to user mode, rip = rcx, rsp = rdx, r11 = 0x202

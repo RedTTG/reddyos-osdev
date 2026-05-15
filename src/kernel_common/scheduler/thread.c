@@ -43,6 +43,7 @@ void setup_user_stack(thread_t* thread, void (*entry)(void*)) {
 
     // instruction pointer for RET
     *(--stack) = (uint64_t)thread->user_stack;
+    *(--stack) = 0x202; // Rflags
     *(--stack) = (uint64_t)entry;
     // thread_entry_user ^
     *(--stack) = (uint64_t)thread_entry_user;
@@ -52,11 +53,13 @@ void setup_user_stack(thread_t* thread, void (*entry)(void*)) {
     *(--stack) = 0;
     *(--stack) = 0;
     *(--stack) = 0;
-    terminal_write("User stack: ");
-    terminal_write_hex_u64((uint64_t)thread->user_stack);
-    terminal_write(" tr: ");
-    terminal_write_hex_u64((uint64_t)vmm_translate(&thread->process->address_space,(uint64_t)thread->user_stack));
-    terminal_write("\n");
+    // terminal_write("CR3: ");
+    // terminal_write_hex_u64((uint64_t)thread->process->address_space.cr3);
+    // terminal_write(" User stack: ");
+    // terminal_write_hex_u64((uint64_t)thread->user_stack-8);
+    // terminal_write(" tr: ");
+    // terminal_write_hex_u64((uint64_t)vmm_translate(&thread->process->address_space,(uint64_t)thread->user_stack - 8));
+    // terminal_write("\n");
     thread->rsp = (uint64_t)stack;
 }
 

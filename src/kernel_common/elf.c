@@ -124,13 +124,13 @@ int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_inf
         const uint64_t final_flags = segment_flags(ph.flags);
         const uint64_t page_count = (map_end - map_start) >> 12;
 
-        terminal_write("Final flags: ");
-        if (final_flags & PAGE_WRITABLE) terminal_write("WRITABLE ");
-        if (final_flags & PAGE_USER) terminal_write("USER ");
-        if (final_flags & PAGE_WTHRU) terminal_write("WTHRU ");
-        if (final_flags & PAGE_NOCACHE) terminal_write("NOCACHE ");
-        if (final_flags & PAGE_NX) terminal_write("NX ");
-        terminal_write("\n");
+        // terminal_write("Final flags: ");
+        // if (final_flags & PAGE_WRITABLE) terminal_write("WRITABLE ");
+        // if (final_flags & PAGE_USER) terminal_write("USER ");
+        // if (final_flags & PAGE_WTHRU) terminal_write("WTHRU ");
+        // if (final_flags & PAGE_NOCACHE) terminal_write("NOCACHE ");
+        // if (final_flags & PAGE_NX) terminal_write("NX ");
+        // terminal_write("\n");
 
         if (page_count == 0)
             continue;
