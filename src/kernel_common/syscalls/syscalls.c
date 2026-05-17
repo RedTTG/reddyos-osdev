@@ -10,6 +10,8 @@ void syscall_init(void)
 {
     // Setup GS base
     wrmsr(IA32_KERNEL_GSBASE, (uint64_t)&percpu_data);
+    wrmsr(IA32_GSBASE, 0);
+
 
 
     // Enable syscalls
@@ -46,6 +48,14 @@ long syscall_handler(syscall_args_t* args)
     terminal_write("syscall number: ");
     terminal_write_u64(args->rax);
     terminal_write("\n");
+    terminal_write("Current thread ID: ");
+    terminal_write_u64(current_thread ? current_thread->tid : 0);
+    terminal_write("\n");
+    if (current_thread && current_thread->process) {
+        terminal_write("Current PID: ");
+        terminal_write_u64(current_thread->process->pid);
+        terminal_write("\n");
+    }
 
     switch (args->rax)
     {

@@ -13,10 +13,6 @@ static __attribute__((noreturn)) void hcf(void)
 void timer_handler(const interrupt_frame_t* frame)
 {
     (void)frame;
-    if (paging_current_cr3() != paging_kernel_cr3()) {
-        // terminal_write("Restore kernel CR3\n");
-        paging_load_cr3(paging_kernel_cr3());
-    }
     schedule();
 }
 

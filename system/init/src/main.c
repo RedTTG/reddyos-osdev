@@ -16,9 +16,9 @@ void _start(void)
     long i = 1;
     for (;;) {
         i++;
-        if (i > 10000000){
+        // if (i > 10000000){
         i = sys_test(i);
-        }
+        // }
         __asm__ volatile("nop");
     }
 }

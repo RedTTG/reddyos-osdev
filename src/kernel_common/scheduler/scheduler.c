@@ -68,8 +68,10 @@ void schedule()
     //     terminal_write("\n");
     // }
 
+    terminal_write("START\n");
     arch_switch_thread(
         prev,
         current_thread
     );
+    terminal_write("END\n");
 }

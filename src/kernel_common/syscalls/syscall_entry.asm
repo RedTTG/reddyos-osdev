@@ -1,5 +1,5 @@
 global syscall_entry
-extern syscall_handler, current_thread
+extern syscall_handler, current_thread, debug_context
 
 section .text
 
@@ -58,8 +58,8 @@ syscall_entry:
     mov rcx, [gs:8]           ; user RCX (for return address)
     mov r11, [gs:16]          ; user R11 (for RFLAGS)
 
-    swapgs
-
     mov rsp, rbx
 
+    call debug_context;
+    swapgs
     sysret

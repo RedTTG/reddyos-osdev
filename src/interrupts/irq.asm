@@ -1,5 +1,6 @@
 global irq_stub_table
 extern irq_handler
+%include "macros.inc"
 
 %assign i 0
 %rep 16
@@ -34,6 +35,7 @@ IRQ 14
 IRQ 15
 
 irq_common:
+    swapgs_if_necessary;
     push rax
     push rbx
     push rcx
@@ -70,6 +72,7 @@ irq_common:
     pop rax
 
     add rsp, 16
+    swapgs_if_necessary;
     iretq
 
 section .note.GNU-stack noalloc noexec nowrite progbits

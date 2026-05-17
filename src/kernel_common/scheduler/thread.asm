@@ -31,4 +31,5 @@ thread_entry_user:
     pop r11 ; future user rflags
     mov rsp, rdx ; set user stack pointer
     or  r11, 0x200 ; enable interrupts in user mode
+    swapgs
     sysret ; return to user mode, rip = rcx, rsp = rdx, r11 = 0x202
