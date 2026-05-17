@@ -1,5 +1,5 @@
 global syscall_entry
-extern syscall_handler, current_thread, debug_context
+extern syscall_handler, current_thread
 
 section .text
 
@@ -54,12 +54,23 @@ syscall_entry:
 
     add rsp, 56
 
-    mov rbx, [gs:0]           ; user RSP (stable across the C call)
-    mov rcx, [gs:8]           ; user RCX (for return address)
-    mov r11, [gs:16]          ; user R11 (for RFLAGS)
+    mov rbx, [gs:0]           ; user RSP
+    mov rcx, [gs:8]           ; user RCX (return address)
+    mov r11, [gs:16]          ; user R11 (RFLAGS)
 
-    mov rsp, rbx
+    ; Build the interrupt frame for iretq (bottom to top on stack)
+    ; iretq pops: RIP, CS, RFLAGS, RSP, SS (in that order, from top of frame)
 
-    call debug_context;
+    ; We need to prepare a kernel stack with the proper frame
+    ; Current RSP is at the end of our working area, set it up as kernel temp
+    sub rsp, 40               ; allocate space for: SS(8), RSP(8), RFLAGS(8), CS(8), RIP(8)
+
+    ; Push in reverse order (build frame from bottom up)
+    mov qword [rsp + 32], 0x23      ; SS (user data segment, ring 3)
+    mov qword [rsp + 24], rbx       ; RSP (user stack pointer)
+    mov qword [rsp + 16], r11       ; RFLAGS (user flags)
+    mov qword [rsp + 8],  0x1b      ; CS (user code segment, ring 3)
+    mov qword [rsp + 0],  rcx       ; RIP (user return address)
+
     swapgs
-    sysret
+    iretq

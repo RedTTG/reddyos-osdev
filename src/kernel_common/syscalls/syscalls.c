@@ -45,27 +45,27 @@ long syscall_handler(syscall_args_t* args)
     // args->rax contains the syscall number
     // args->rdi, args->rsi, args->rdx, args->r10, args->r8, args->r9 contain the arguments
 
-    terminal_write("syscall number: ");
-    terminal_write_u64(args->rax);
-    terminal_write("\n");
-    terminal_write("Current thread ID: ");
-    terminal_write_u64(current_thread ? current_thread->tid : 0);
-    terminal_write("\n");
-    if (current_thread && current_thread->process) {
-        terminal_write("Current PID: ");
-        terminal_write_u64(current_thread->process->pid);
-        terminal_write("\n");
-    }
+    // terminal_write("syscall number: ");
+    // terminal_write_u64(args->rax);
+    // terminal_write("\n");
+    // terminal_write("Current thread ID: ");
+    // terminal_write_u64(current_thread ? current_thread->tid : 0);
+    // terminal_write("\n");
+    // if (current_thread && current_thread->process) {
+    //     terminal_write("Current PID: ");
+    //     terminal_write_u64(current_thread->process->pid);
+    //     terminal_write("\n");
+    // }
 
     switch (args->rax)
     {
         case 1: // Example syscall
             args->rax = args->rdi + 2;
-            terminal_write("sys_test called with arg: ");
-            terminal_write_u64(args->rdi);
-            terminal_write(", returning: ");
-            terminal_write_u64(args->rax);
-            terminal_write("\n");
+            // terminal_write("sys_test called with arg: ");
+            // terminal_write_u64(args->rdi);
+            // terminal_write(", returning: ");
+            // terminal_write_u64(args->rax);
+            // terminal_write("\n");
             return args->rax;
     }
 

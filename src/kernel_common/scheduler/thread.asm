@@ -27,9 +27,19 @@ thread_entry_kernel:
 thread_entry_user:
     pop rcx ; future user rip
     pop rdx ; future user rsp
-
     pop r11 ; future user rflags
-    mov rsp, rdx ; set user stack pointer
+
     or  r11, 0x200 ; enable interrupts in user mode
+
+    ; Build the interrupt frame for iretq
+    ; iretq pops: RIP, CS, RFLAGS, RSP, SS (in that order, from top of frame)
+    sub rsp, 40               ; allocate space for the frame
+
+    mov qword [rsp + 32], 0x23      ; SS (user data segment, ring 3)
+    mov qword [rsp + 24], rdx       ; RSP (user stack pointer)
+    mov qword [rsp + 16], r11       ; RFLAGS (user flags)
+    mov qword [rsp + 8],  0x1b      ; CS (user code segment, ring 3)
+    mov qword [rsp + 0],  rcx       ; RIP (user return address)
+
     swapgs
-    sysret ; return to user mode, rip = rcx, rsp = rdx, r11 = 0x202
+    iretq
