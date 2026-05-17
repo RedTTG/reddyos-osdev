@@ -25,6 +25,11 @@ process_t* process_create(const char* filename)
 
     memset(p, 0, sizeof(*p));
 
+    if (!process_fd_init(p)) {
+        kfree(p);
+        return 0;
+    }
+
     p->address_space = paging_create_address_space();
     if (!p->address_space.cr3)
     {

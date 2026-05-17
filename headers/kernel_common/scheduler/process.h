@@ -13,6 +13,9 @@ typedef struct process {
 
     thread_t* main_thread;
     uint64_t pid;
+
+    fd_t** fds;
+    size_t fd_capacity;
 } process_t;
 
 process_t* process_create(const char* filename);

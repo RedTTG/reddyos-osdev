@@ -46,8 +46,8 @@ void* kmalloc(size_t size)
         cur = cur->next;
     }
 
-    size_t total = sizeof(block_t) + size;
-    size_t pages = (total + PAGE_SIZE - 1) / PAGE_SIZE;
+    const size_t total = sizeof(block_t) + size;
+    const size_t pages = (total + PAGE_SIZE - 1) / PAGE_SIZE;
 
     block_t* block = request_pages(pages);
 
@@ -69,4 +69,17 @@ void kfree(void* ptr)
 
     block_t* block = (block_t*)ptr - 1;
     block->free = 1;
+}
+
+void * kcalloc(const size_t count, const size_t size) {
+    const size_t total = count * size;
+
+    void *ptr = kmalloc(total);
+
+    if (!ptr)
+        return NULL;
+
+    memset(ptr, 0, total);
+
+    return ptr;
 }

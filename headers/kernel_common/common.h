@@ -14,8 +14,10 @@
 #include "filesystem/vfs/files.h"
 #include "filesystem/vfs/vfs.h"
 #include "filesystem/vfs/mount.h"
-//
+// TarFS
 #include "filesystem/fs/tarfs/tarfs.h"
+// File descriptors
+#include "filesystem/fd/fd.h"
 
 // INIT
 #include "pit.h"

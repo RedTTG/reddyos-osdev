@@ -99,6 +99,7 @@ void kmain(void) {
 
     // TarFS
     tarsf_limine_init();
+    fd_init();
 
     // Syscalls
     syscall_init();

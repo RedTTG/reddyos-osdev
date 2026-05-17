@@ -19,6 +19,7 @@ int vfs_open(const char* path, file_t* out)
         {
             out->vnode = children[i];
             out->offset = 0;
+            out->refcount = 0;
 
             return 0;
         }
