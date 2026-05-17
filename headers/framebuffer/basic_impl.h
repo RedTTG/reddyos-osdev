@@ -46,7 +46,7 @@ static void fb_draw_square(int x, int y, uint32_t color)
 void animate_square(void)
 {
     square_ticks++;
-    if (square_ticks < 1000 * 1000)
+    if (square_ticks < 10000)
         return;
     square_ticks = 0;
     fb_draw_square(square_x, square_y, FB_BLACK);
