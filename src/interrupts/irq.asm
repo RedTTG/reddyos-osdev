@@ -72,7 +72,7 @@ irq_common:
     pop rax
 
     add rsp, 16
-    swapgs_if_necessary;
+    swapgs
     iretq
 
 section .note.GNU-stack noalloc noexec nowrite progbits

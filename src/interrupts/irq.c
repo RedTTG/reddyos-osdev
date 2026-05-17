@@ -69,6 +69,12 @@ void irq_dispatch(interrupt_frame_t* frame) {
 
     if (handlers[vector])
         handlers[vector](frame);
+    else {
+        terminal_write("Unhandled IRQ: ");
+        terminal_write_u8(vector);
+        terminal_write("\n");
+    }
+
 }
 
 void irq_handler(interrupt_frame_t* frame)
