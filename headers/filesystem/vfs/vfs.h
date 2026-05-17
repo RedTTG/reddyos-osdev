@@ -1,5 +1,5 @@
 #pragma once
-#include "file.h"
+#include "files.h"
 
 int vfs_open(const char* path, file_t* out);
 

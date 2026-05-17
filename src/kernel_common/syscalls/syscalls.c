@@ -61,11 +61,6 @@ long syscall_handler(syscall_args_t* args)
     {
         case 1: // Example syscall
             args->rax = args->rdi + 2;
-            // terminal_write("sys_test called with arg: ");
-            // terminal_write_u64(args->rdi);
-            // terminal_write(", returning: ");
-            // terminal_write_u64(args->rax);
-            // terminal_write("\n");
             return args->rax;
     }
 

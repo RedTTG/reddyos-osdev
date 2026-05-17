@@ -5,6 +5,5 @@
 typedef struct file
 {
     vnode_t* vnode;
-
     uint64_t offset;
 } file_t;
