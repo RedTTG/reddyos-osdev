@@ -47,27 +47,22 @@ void _start(void)
     fb_info_t fb_info;
     sys_ioctl(fb0, FB_IOCTL_GET_INFO, (uint64_t)&fb_info);
     terminal_write_fb_overview(&fb_info);
-
-    char buffer[2048];
-
+    uint8_t val[4096000];
     for (size_t y = 0; y < fb_info.height; y++) {
         for (size_t x = 0; x < fb_info.width; x++) {
             uint32_t nX = x * 255 / fb_info.width;
             uint32_t nY = y * 255 / fb_info.height;
             uint32_t idx = y * (fb_info.pitch / 4) + x;
-            if (idx >= 2048) {
-                goto finish_fb_buffer;
-            }
-            buffer[idx] = (nY << 8) | nX;
+            val[idx] = (nY << 8) | nX;
         }
     }
-    finish_fb_buffer:
 
-    res = sys_write(fb0, &buffer[0], 2048);
-    if (res != 0) {
+    res = sys_write(fb0, &val[0], sizeof(val));
+    if (res <= 0) {
         terminal_write("Failed to write to fb0\n");
         goto end;
     }
+
     sys_ioctl(fb0, FB_IOCTL_FLIP, 0);
 end:
     for (;;) {

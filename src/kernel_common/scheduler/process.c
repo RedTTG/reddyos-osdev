@@ -40,6 +40,7 @@ process_t* process_create(const char* filename)
     p->entry_point = info.entry;
     p->user_stack_top = USER_STACK_TOP - 8;
     p->user_stack_bottom = USER_STACK_TOP - PAGE_SIZE;
+    p->user_stack_bottom_max = USER_STACK_TOP - (PAGE_SIZE * 5000);
     p->main_thread = 0;
     p->pid = next_pid++;
 
@@ -55,12 +56,14 @@ process_t* process_create(const char* filename)
     memset(VIRT(stack_phys), 0, PAGE_SIZE);
 
     // Map the stack
-    vmm_map(
-        &p->address_space,
-        p->user_stack_bottom,
-        (uint64_t)stack_phys,
-        PAGE_USER | PAGE_WRITABLE | PAGE_PRESENT
-    );
+    for (uint64_t addr = p->user_stack_bottom_max; addr <= p->user_stack_bottom; addr += PAGE_SIZE) {
+        vmm_map(
+            &p->address_space,
+            addr,
+            (uint64_t)stack_phys,
+            PAGE_USER | PAGE_WRITABLE | PAGE_PRESENT
+        );
+    }
 
     if (elf_load_into_address_space(&p->address_space, &file, &info) != 0)
     {

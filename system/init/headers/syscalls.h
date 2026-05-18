@@ -86,6 +86,21 @@ inline long sys_close(uint fd)
     return res;
 }
 
+inline long sys_lseek(uint fd, off_t offset, int whence)
+{
+    long res;
+    __asm__ volatile (
+        "syscall\n"
+        : "=a"(res)
+        : "a"(8),
+          "D"(fd),
+          "S"(offset),
+          "d"(whence)
+        : "rcx", "r11"
+    );
+    return res;
+}
+
 inline long sys_term(char c)
 {
     long res;

@@ -10,6 +10,7 @@ typedef struct process {
 
     uint64_t user_stack_top;
     uint64_t user_stack_bottom;
+    uint64_t user_stack_bottom_max;
 
     thread_t* main_thread;
     uint64_t pid;
