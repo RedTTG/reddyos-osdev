@@ -73,6 +73,19 @@ inline long sys_stat(const char* filename, stat_t* stat) {
     return res;
 }
 
+inline long sys_close(uint fd)
+{
+    long res;
+    __asm__ volatile (
+        "syscall\n"
+        : "=a"(res)
+        : "a"(3),
+          "D"(fd)
+        : "rcx", "r11"
+    );
+    return res;
+}
+
 inline long sys_term(char c)
 {
     long res;

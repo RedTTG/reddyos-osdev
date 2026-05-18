@@ -18,21 +18,21 @@ void _start(void)
     // sys fstat
     stat_t stat;
     long res = sys_fstat(fd, &stat);
-    if (res < 0) {
+    if (res != 0) {
         terminal_write("Failed to fstat fd\n");
         goto end;
     }
     terminal_write_stat_overview(&stat);
     // sys stat
     res = sys_stat("test.txt", &stat);
-    if (res < 0) {
+    if (res != 0) {
         terminal_write("Failed to stat filename\n");
         goto end;
     }
     terminal_write_stat_overview(&stat);
     // sys stat on dev device
     res = sys_stat("/dev/fb0", &stat);
-    if (res < 0) {
+    if (res != 0) {
         terminal_write("Failed to stat fb0\n");
         goto end;
     }
@@ -64,7 +64,7 @@ void _start(void)
     finish_fb_buffer:
 
     res = sys_write(fb0, &buffer[0], 2048);
-    if (res < 0) {
+    if (res != 0) {
         terminal_write("Failed to write to fb0\n");
         goto end;
     }
