@@ -1,20 +1,32 @@
 #include "common.h"
 
-int sys_open(const char* path, int flags, int mode) {
+int do_sys_open(const char* path, int flags, int mode) {
     return process_fd_open(current_thread->process, path, flags, mode);
 }
 
-long sys_read(const int fd, char *buffer, const size_t size) {
-    if (buffer == NULL || size == 0)
-        return -1;
+ssize_t do_sys_read(const int fd, void *buffer, const size_t size) {
+    if (!buffer || size == 0)
+        return -EINVAL;
+
     file_t* file = process_unpack_fd(current_thread->process, fd);
-    if (file == NULL)
-        return -1;
+    if (!file)
+        return -EBADF;
 
-    const int read = vfs_read(file, buffer, size);
+    return vfs_read(file, buffer, size);
+}
 
-    if (read <= 0)
-        return -1;
-    return read;
+ssize_t do_sys_write(int fd, const void *buffer, size_t size) {
+    if (!buffer || size == 0)
+        return -EINVAL;
+
+    file_t* file = process_unpack_fd(current_thread->process, fd);
+    if (!file)
+        return -EBADF;
+
+    return vfs_write(file, buffer, size);
+}
+
+int do_sys_close(int fd) {
+    return process_fd_close(current_thread->process, fd);
 }
 

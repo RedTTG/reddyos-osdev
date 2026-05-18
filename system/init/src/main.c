@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 static long sys_open(const char* path, int flags, int mode)
 {
@@ -15,7 +16,7 @@ static long sys_open(const char* path, int flags, int mode)
     );
     return res;
 }
-static long sys_read(int fd, char *buffer, size_t size)
+static ssize_t sys_read(int fd, char *buffer, size_t size)
 {
     long res;
     __asm__ volatile (

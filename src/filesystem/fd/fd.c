@@ -94,9 +94,8 @@ static int of_close(const int idx) {
     if (--file->refcount == 0) {
         kfree(file);
         global_file_table[idx] = NULL;
-        return 0;
     }
-    return -1;
+    return 0;
 }
 
 int process_fd_open(process_t* process, const char *path, int flags, int mode) {
@@ -133,7 +132,25 @@ clean_of:
     return -1;
 }
 
+int process_fd_close(process_t *process, int fd) {
+    if (!process || fd < 0 || fd >= process->fd_capacity)
+        return -1;
+    fd_t* fd_p = process->fds[fd];
+    if (!fd_p)
+        return -1;
+
+    of_close(fd_p->of_idx);
+
+    process->fds[fd] = NULL;
+    kfree(fd_p);
+
+    return 0;
+}
+
 file_t * process_unpack_fd(const process_t *process, const int fd) {
+    if (!process || fd < 0 || fd >= process->fd_capacity)
+        return NULL;
+
     fd_t* fd_p = process->fds[fd];
     if (!fd_p)
         return NULL;

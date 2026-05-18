@@ -61,15 +61,25 @@ long syscall_handler(syscall_args_t* args)
     {
         case 0: // read
             const int fd = (int)args->rdi;
-            char* buffer = (char*)args->rsi;
+            void* buffer = (char*)args->rsi;
             const size_t size = (size_t)args->rdx;
-            args->rax = sys_read(fd, buffer, size);
+            args->rax = do_sys_read(fd, buffer, size);
+            return args->rax;
+        case 1: // write
+            const int fd_w = (int)args->rdi;
+            const void* buffer_w = (char*)args->rsi;
+            const size_t size_w = (size_t)args->rdx;
+            args->rax = do_sys_write(fd_w, buffer_w, size_w);
             return args->rax;
         case 2: // open
             const char* path = (char*)args->rdi;
             const int flags = (int)args->rsi;
             const int mode = (int)args->rdx;
-            args->rax = sys_open(path, flags, mode);
+            args->rax = do_sys_open(path, flags, mode);
+            return args->rax;
+        case 3: // close
+            const int fd_c = (int)args->rdi;
+            args->rax = do_sys_close(fd_c);
             return args->rax;
         case 100: // term putc
             const char ch = (char)(uint8_t)args->rdi;

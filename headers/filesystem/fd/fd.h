@@ -11,6 +11,7 @@ extern file_t **global_file_table;
 extern size_t global_file_capacity;
 
 int process_fd_open(process_t* process, const char *path, int flags, int mode);
+int process_fd_close(process_t* process, int fd);
 file_t* process_unpack_fd(const process_t* process, int fd);
 
 void fd_init();

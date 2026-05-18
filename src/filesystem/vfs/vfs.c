@@ -38,9 +38,9 @@ int vfs_open(const char* path, file_t* out, int flags, int mode)
     return -1;
 }
 
-int vfs_read(
-    file_t* file,
-    void* buffer,
+ssize_t vfs_read(
+    file_t *file,
+    void *buffer,
     uint64_t size
 )
 {
@@ -55,4 +55,23 @@ int vfs_read(
         file->offset += read;
 
     return read;
+}
+
+ssize_t vfs_write(
+    file_t *file,
+    const void *buffer,
+    uint64_t size
+)
+{
+    int write = file->vnode->ops->write(
+        file->vnode,
+        file->offset,
+        buffer,
+        size
+    );
+
+    if (write > 0)
+        file->offset += write;
+
+    return write;
 }
