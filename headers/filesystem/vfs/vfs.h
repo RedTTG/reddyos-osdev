@@ -8,3 +8,7 @@ ssize_t vfs_read(file_t *file, void *buffer, uint64_t size);
 ssize_t vfs_write(file_t *file, const void *buffer, uint64_t size);
 
 void vfs_close(file_t* file);
+
+// Directory helpers
+int vfs_is_dir(const char* path);
+int vfs_dir_count(const char* path);

@@ -105,6 +105,7 @@ void tarfs_init(void *address) {
 
     static mount_t root_mount_obj;
 
+    root_mount_obj.name = "tarfs";
     root_mount_obj.root = &root_node;
 
     root_mount = &root_mount_obj;

@@ -123,18 +123,21 @@ void terminal_write_hex_u8(uint8_t value)
 void _start(void)
 {
     terminal_write("\nINIT BEGIN!\n");
-    int fd = sys_open("/test.txt", 0, 0);
+    int fd = sys_open("/dev/fb0", 0, 0);
 
     if (fd < 0) {
         terminal_write("Failed to open file\n");
         goto end;
     }
 
-    static char buffer[128];
+    static char buffer[64];
     sys_read(fd, buffer, sizeof(buffer));
 
     terminal_write("Contents of file: ");
-    terminal_write(buffer);
+    for (int i; i < 64; i++) {
+        terminal_write_hex_u8(buffer[0]);
+        terminal_putc(' ');
+    }
     terminal_write("\n");
 end:
     for (;;) {

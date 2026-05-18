@@ -1,5 +1,4 @@
 #include "common.h"
-#include "framebuffer/basic_impl.h"
 #include "interrupts/gdt.h"
 
 // Halt and catch fire function.
@@ -16,25 +15,7 @@ void timer_handler(const interrupt_frame_t* frame)
     schedule();
 }
 
-void task_a(void* arg)
-{
-    (void)arg;
-    // ReSharper disable once CppDFAEndlessLoop
-
-    // Ensure we got a framebuffer.
-    if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
-        hcf();
-    }
-
-    // Fetch the first framebuffer.
-    square_init(framebuffer_request.response->framebuffers[0]);
-
-    while (1) {
-        animate_square();
-    }
-}
-
-void task_b(void* arg)
+void load_init(void* arg)
 {
     (void)arg;
     process_t* process = process_create("/bin/init");
@@ -78,6 +59,21 @@ void init_memory(void) {
     terminal_write("Memory initialized!\n");
 }
 
+void init_filesystem(void) {
+    tarsf_limine_init();
+    fd_init();
+
+    // Mount devfs at /dev
+    devfs_init();
+    if (mount_fs("/dev", devfs_root()) != 0) {
+        terminal_write("Warning: failed to mount /dev\n");
+    }
+}
+
+void register_devices(void) {
+    fb_device_init();
+}
+
 void kmain(void) {
     // Ensure the bootloader actually understands our base revision (see spec).
     if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {
@@ -97,9 +93,9 @@ void kmain(void) {
 
     irq_register_handler(32, timer_handler);
 
-    // TarFS
-    tarsf_limine_init();
-    fd_init();
+    // Filesystem
+    init_filesystem();
+    register_devices();
 
     // Syscalls
     syscall_init();
@@ -107,13 +103,9 @@ void kmain(void) {
     // Initialize the scheduler
     scheduler_init();
 
-    thread_t* a = thread_create(task_a);
-    thread_t* b = thread_create(task_b);
+    thread_t* a = thread_create(load_init);
 
     scheduler_add(a);
-    scheduler_add(b);
-
-    // task_b(0);
 
     // Finally start the timer
     lapic_timer_start();

@@ -14,10 +14,10 @@ const u64 syscallCount = sizeof(syscall_table) / sizeof(syscall_table[0]);
 void syscall_init(void)
 {
     // Setup GS base
-    wrmsr(IA32_KERNEL_GSBASE, (uint64_t)&percpu_data);
-    wrmsr(IA32_GSBASE, 0);
-
-
+    // IA32_GSBASE is active in kernel mode (after being swapped by thread_entry_user)
+    // IA32_KERNEL_GSBASE is the "user" slot (what user code will use after swapgs in thread_entry_user)
+    wrmsr(IA32_GSBASE, (uint64_t)&percpu_data);
+    wrmsr(IA32_KERNEL_GSBASE, 0);
 
     // Enable syscalls
     wrmsr(
