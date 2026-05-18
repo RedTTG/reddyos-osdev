@@ -133,7 +133,7 @@ void _start(void)
     static char buffer[64];
     sys_read(fd, buffer, sizeof(buffer));
 
-    terminal_write("Contents of file: ");
+    terminal_write("Contents of fb0 back: ");
     for (int i; i < 64; i++) {
         terminal_write_hex_u8(buffer[0]);
         terminal_putc(' ');

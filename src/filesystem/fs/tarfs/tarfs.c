@@ -32,7 +32,9 @@ static int tar_read(
 
 static vnode_ops_t tar_ops =
 {
-    .read = tar_read
+    .read = tar_read,
+    .write = NULL,
+    .ioctl = NULL
 };
 
 static vnode_t root_node;

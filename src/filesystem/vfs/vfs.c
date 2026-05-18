@@ -169,3 +169,14 @@ ssize_t vfs_write(
 
     return write;
 }
+
+int vfs_ioctl(file_t *file, uint64_t request, void *arg)
+{
+    if (!file || !file->vnode || !file->vnode->ops)
+        return -1;
+
+    if (!file->vnode->ops->ioctl)
+        return -1;  // Operation not supported
+
+    return file->vnode->ops->ioctl(file->vnode, request, arg);
+}

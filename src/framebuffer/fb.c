@@ -56,10 +56,44 @@ static int fb_write(vnode_t *vnode, uint64_t offset, const void *buffer, uint64_
     return (int)size;
 }
 
+static int fb_ioctl(vnode_t *vnode, uint64_t request, void *arg) {
+    reddyos_framebuffer_t* fb = (reddyos_framebuffer_t*)vnode->internal;
+
+    switch (request) {
+        case FB_IOCTL_FLIP:
+            if (fb)
+                memcpy(fb->front, fb->back, fb->size);
+            return 0;
+
+        case FB_IOCTL_CLEAR: {
+            uint8_t color = (uint8_t)(uintptr_t)arg;
+            if (fb)
+                memset(fb->back, color, fb->size);
+            return 0;
+        }
+
+        case FB_IOCTL_GET_INFO: {
+            fb_info_t* info = (fb_info_t*)arg;
+            if (!info || !fb)
+                return -1;
+            info->width = fb->width;
+            info->height = fb->height;
+            info->pitch = fb->pitch;
+            info->bpp = fb->bpp;
+            info->size = fb->size;
+            return 0;
+        }
+
+        default:
+            return -1;  // Unknown request
+    }
+}
+
 static vnode_ops_t fb_ops =
 {
     .read = fb_read,
-    .write = fb_write
+    .write = fb_write,
+    .ioctl = fb_ioctl
 };
 
 void fb_device_init(void) {

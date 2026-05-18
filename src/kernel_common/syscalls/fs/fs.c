@@ -31,3 +31,10 @@ u64 do_sys_close(int fd) {
     return process_fd_close(current_thread->process, fd);
 }
 
+u64 do_sys_ioctl(int fd, uint64_t request, void* arg) {
+    file_t* file = process_unpack_fd(current_thread->process, fd);
+    if (!file)
+        return -EBADF;
+
+    return vfs_ioctl(file, request, arg);
+}

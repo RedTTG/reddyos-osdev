@@ -16,6 +16,12 @@ typedef struct vnode_ops
         const void* buffer,
         uint64_t size
     );
+
+    int (*ioctl)(
+        vnode_t* node,
+        uint64_t request,
+        void* arg
+    );
 } vnode_ops_t;
 
 typedef struct vnode
