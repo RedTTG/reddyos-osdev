@@ -6,6 +6,10 @@ add_executable(init
         src/main.c
 )
 
+target_include_directories(init BEFORE PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/headers"
+)
+
 set_target_properties(init PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/dist/bin/system"
         SUFFIX ""
