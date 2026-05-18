@@ -85,3 +85,18 @@ inline long sys_term(char c)
     );
     return res;
 }
+
+inline long sys_ioctl(uint fd, uint64_t request, uint64_t arg)
+{
+    long res;
+    __asm__ volatile (
+        "syscall\n"
+        : "=a"(res)
+        : "a"(16),
+          "D"(fd),
+          "S"(request),
+          "d"(arg)
+        : "rcx", "r11"
+    );
+    return res;
+}

@@ -21,7 +21,7 @@ typedef struct vnode_ops
     int (*ioctl)(
         vnode_t* node,
         uint64_t cmd,
-        void* arg
+        uint64_t arg
     );
 } vnode_ops_t;
 

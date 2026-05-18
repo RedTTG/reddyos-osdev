@@ -95,7 +95,6 @@ int elf_read_info(file_t* file, elf_info_t* info)
 int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_info_t* info)
 {
     elf_header_t header;
-    uint64_t old_cr3;
 
     if (!as || !file || !info)
         return -1;

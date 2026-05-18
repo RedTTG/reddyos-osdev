@@ -56,7 +56,7 @@ static int fb_write(vnode_t *vnode, uint64_t offset, const void *buffer, uint64_
     return (int)size;
 }
 
-static int fb_ioctl(vnode_t *vnode, uint64_t cmd, void *arg) {
+static int fb_ioctl(vnode_t *vnode, uint64_t cmd, uint64_t arg) {
     reddyos_framebuffer_t* fb = (reddyos_framebuffer_t*)vnode->internal;
 
     switch (cmd) {
@@ -66,7 +66,7 @@ static int fb_ioctl(vnode_t *vnode, uint64_t cmd, void *arg) {
             return 0;
 
         case FB_IOCTL_CLEAR: {
-            uint8_t color = (uint8_t)(uintptr_t)arg;
+            uint8_t color = (uint8_t)arg;
             if (fb)
                 memset(fb->back, color, fb->size);
             return 0;

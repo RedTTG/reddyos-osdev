@@ -173,7 +173,7 @@ ssize_t vfs_write(
     return write;
 }
 
-int vfs_ioctl(file_t *file, uint64_t cmd, void *arg)
+int vfs_ioctl(file_t *file, uint64_t cmd, uint64_t arg)
 {
     if (!file || !file->vnode || !file->vnode->ops)
         return -1;

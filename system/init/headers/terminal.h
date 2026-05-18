@@ -164,3 +164,29 @@ static void terminal_write_stat_overview(const stat_t* stat)
     terminal_write("\n");
 }
 
+static void terminal_write_fb_overview(const fb_info_t* info)
+{
+    if (!info) {
+        terminal_write("fb_info: <null>\n");
+        return;
+    }
+
+    terminal_write("Framebuffer info:\n");
+    terminal_write("  resolution: ");
+    terminal_write_u64(info->width);
+    terminal_write("x");
+    terminal_write_u64(info->height);
+    terminal_write("\n");
+
+    terminal_write("  pitch: ");
+    terminal_write_u64(info->pitch);
+    terminal_write(" bytes\n");
+
+    terminal_write("  bpp: ");
+    terminal_write_u64(info->bpp);
+    terminal_write("\n");
+
+    terminal_write("  size: ");
+    terminal_write_u64(info->size);
+    terminal_write(" bytes\n");
+}

@@ -35,7 +35,7 @@ u64 do_sys_close(uint fd) {
     return process_fd_close(current_thread->process, fd);
 }
 
-u64 do_sys_ioctl(uint fd, uint64_t cmd, void* arg) {
+u64 do_sys_ioctl(uint fd, uint64_t cmd, uint64_t arg) {
     file_t* file = process_unpack_fd(current_thread->process, fd);
     if (!file)
         return -EBADF;

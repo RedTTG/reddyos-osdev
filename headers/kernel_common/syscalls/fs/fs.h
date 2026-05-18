@@ -10,7 +10,7 @@ u64 do_sys_open(const char* path, int flags, int mode);
 u64 do_sys_read(uint fd, void *buffer, size_t size);
 u64 do_sys_write(uint fd, const void* buffer, size_t size);
 u64 do_sys_close(uint fd);
-u64 do_sys_ioctl(uint fd, uint64_t cmd, void* arg);
+u64 do_sys_ioctl(uint fd, uint64_t cmd, uint64_t arg);
 u64 do_sys_stat(const char* filename, stat_t* buffer);
 u64 do_sys_fstat(uint fd, stat_t* buffer);
 off_t do_sys_lseek(uint fd, off_t offset, int whence);
@@ -31,7 +31,7 @@ static u64 sys_write(const syscall_args_t* args) {
 }
 
 static u64 sys_ioctl(const syscall_args_t* args) {
-    return do_sys_ioctl((uint)args->arg1, (uint64_t)args->arg2, (void*)args->arg3);
+    return do_sys_ioctl((uint)args->arg1, (uint64_t)args->arg2, (uint64_t)args->arg3);
 }
 
 static u64 sys_lseek(const syscall_args_t* args) {

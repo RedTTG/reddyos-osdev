@@ -1,5 +1,6 @@
 #pragma once
-
+#include <stdint.h>
+#include <stddef.h>
 #define FB_OP_CLEAR 1
 #define FB_OP_FLIP 2
 #define FB_NOP 0
