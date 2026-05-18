@@ -13,6 +13,7 @@ set_target_properties(init PROPERTIES
 
 target_compile_options(init PRIVATE
         -ffreestanding
+        -fno-stack-protector
         -fno-pie
         -no-pie
         -nostdlib

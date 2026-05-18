@@ -59,11 +59,30 @@ long syscall_handler(syscall_args_t* args)
 
     switch (args->rax)
     {
-        case 1: // Example syscall
-            args->rax = args->rdi + 2;
+        case 0: // read
+            const int fd = (int)args->rdi;
+            char* buffer = (char*)args->rsi;
+            const size_t size = (size_t)args->rdx;
+            args->rax = sys_read(fd, buffer, size);
             return args->rax;
+        case 2: // open
+            const char* path = (char*)args->rdi;
+            args->rax = sys_open(path);
+            return args->rax;
+        case 100: // term putc
+            const char ch = (char)(uint8_t)args->rdi;
+            terminal_putc(ch);
+            goto okay;
+        default:
+            terminal_write("Unhandled syscall: ");
+            terminal_write_u8(args->rax);
+            terminal_write("\n");
+            goto error;
     }
-
+okay:
+    args->rax = (long)0;
+    return args->rax;
+error:
     args->rax = (long)-1;
     return -1;
 }

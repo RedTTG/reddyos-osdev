@@ -28,3 +28,6 @@ typedef struct {
 extern void syscall_entry(void);
 extern long syscall_handler(syscall_args_t* args);
 void syscall_init(void);
+
+// Handlers
+#include "syscalls/filesystem.h"

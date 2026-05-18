@@ -38,7 +38,7 @@ process_t* process_create(const char* filename)
     }
 
     p->entry_point = info.entry;
-    p->user_stack_top = USER_STACK_TOP;
+    p->user_stack_top = USER_STACK_TOP - 16;
     p->user_stack_bottom = USER_STACK_TOP - PAGE_SIZE;
     p->main_thread = 0;
     p->pid = next_pid++;

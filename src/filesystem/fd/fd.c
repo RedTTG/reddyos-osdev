@@ -61,7 +61,7 @@ static int of_open(const char *path)
     if (!file)
         return -1;
 
-    if (!vfs_open(path, file)) {
+    if (vfs_open(path, file)<0) {
         kfree(file);
         return -1;
     }
@@ -96,10 +96,10 @@ static int of_close(const int idx) {
     return -1;
 }
 
-int fd_open(process_t* process, const char *path) {
+int process_fd_open(process_t* process, const char *path) {
     const int of_idx = of_open(path);
 
-    if (!of_idx)
+    if (of_idx<0)
         return -1;
 
     fd_t* fd = kmalloc(sizeof(fd_t));
@@ -128,6 +128,14 @@ int fd_open(process_t* process, const char *path) {
 clean_of:
     of_close(of_idx);
     return -1;
+}
+
+file_t * process_unpack_fd(const process_t *process, const int fd) {
+    fd_t* fd_p = process->fds[fd];
+    if (!fd_p)
+        return NULL;
+
+    return global_file_table[fd_p->of_idx];
 }
 
 bool process_fd_init(process_t* process)

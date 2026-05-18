@@ -13,17 +13,17 @@ syscall_entry:
     mov [gs:16], r11          ; Save user R11 at offset 16
 
     ; Get a kernel stack from current_thread
-    ; Use R12 to avoid clobbering RAX (which contains the syscall number)
-    lea r12, [rel current_thread]
-    mov r12, [r12]            ; r12 = current_thread pointer
+    ; Use RCX as scratch (user RCX is already saved in gs:8)
+    lea rcx, [rel current_thread]
+    mov rcx, [rcx]            ; rcx = current_thread pointer
 
-    ; If r12 is null, use emergency stack
-    test r12, r12
+    ; If rcx is null, use emergency stack
+    test rcx, rcx
     jz .use_emergency_stack
 
     ; Get kernel stack pointer from thread->kernel_stack (offset 8 in thread struct)
     ; thread struct layout: rsp(0), kernel_stack(8), user_stack(16), tid(24), ...
-    mov rsp, [r12 + 8]
+    mov rsp, [rcx + 8]
     add rsp, 0x1000           ; Point to top of kernel stack (kernel_stack + PAGE_SIZE)
     jmp .stack_ready
 
@@ -50,12 +50,9 @@ syscall_entry:
     mov rdi, rsp
 
     call syscall_handler
-    mov rax, [rsp + 0]
+    mov rax, [rsp + 0]        ; syscall return value
 
-    add rsp, 56
-
-    mov rbx, [gs:0]           ; user RSP
-    mov rcx, [gs:8]           ; user RCX (return address)
+    mov rcx, [gs:8]           ; user RCX (return RIP)
     mov r11, [gs:16]          ; user R11 (RFLAGS)
 
     ; Build the interrupt frame for iretq (bottom to top on stack)
@@ -67,10 +64,20 @@ syscall_entry:
 
     ; Push in reverse order (build frame from bottom up)
     mov qword [rsp + 32], 0x23      ; SS (user data segment, ring 3)
-    mov qword [rsp + 24], rbx       ; RSP (user stack pointer)
+    mov rdx, [gs:0]                 ; user RSP
+    mov qword [rsp + 24], rdx       ; RSP (user stack pointer)
     mov qword [rsp + 16], r11       ; RFLAGS (user flags)
     mov qword [rsp + 8],  0x1b      ; CS (user code segment, ring 3)
     mov qword [rsp + 0],  rcx       ; RIP (user return address)
+
+    ; Restore user volatile registers (except RCX/R11 which are consumed by iretq)
+    ; After sub rsp,40, syscall_args_t starts at rsp+40.
+    mov rdi, [rsp + 48]
+    mov rsi, [rsp + 56]
+    mov rdx, [rsp + 64]
+    mov r10, [rsp + 72]
+    mov r8,  [rsp + 80]
+    mov r9,  [rsp + 88]
 
     swapgs
     iretq
