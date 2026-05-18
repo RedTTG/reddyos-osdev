@@ -4,6 +4,8 @@ section .text
 
 ; arch_switch_thread(Thread* old, Thread* next)
 arch_switch_thread:
+    fxsave [rdi + 0x40]
+
     push rbx
     push rbp
     push r12
@@ -12,6 +14,7 @@ arch_switch_thread:
     push r15
     mov [rdi], rsp
     mov rsp, [rsi]
+    fxrstor [rsi + 0x40]
     pop r15
     pop r14
     pop r13

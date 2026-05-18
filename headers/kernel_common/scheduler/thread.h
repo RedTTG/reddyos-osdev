@@ -16,6 +16,8 @@ typedef struct thread
     process_t* process;
 
     struct thread* next;
+
+    uint8_t fpu_state[512] __attribute__((aligned(16)));
 } thread_t;
 
 inline bool is_process_thread(const thread_t* thread) {

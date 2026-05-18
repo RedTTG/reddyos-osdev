@@ -42,12 +42,10 @@ void _start(void)
         terminal_write("Failed to open fb0\n");
         goto end;
     }
-    terminal_write("doing the buffer code\n");
     char buffer[256];
     for (int i = 0; i < 256; i++) {
         buffer[i] = 0xFF;
     }
-    terminal_write("done doing the buffer code\n");
     res = sys_write(fb0, &buffer[0], 256);
     if (res < 0) {
         terminal_write("Failed to write to fb0\n");

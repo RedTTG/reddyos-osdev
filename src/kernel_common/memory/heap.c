@@ -5,6 +5,7 @@ typedef struct block
     size_t size;
     int free;
     struct block* next;
+    uint64_t _reserved;
 } block_t;
 
 static block_t* head = 0;

@@ -8,7 +8,6 @@ process_t* process_create(const char* filename)
     file_t file = {0};
     elf_info_t info = {0};
     process_t* p;
-    uint64_t old_cr3 = 0;
 
     if (!filename)
         return 0;
@@ -39,7 +38,7 @@ process_t* process_create(const char* filename)
     }
 
     p->entry_point = info.entry;
-    p->user_stack_top = USER_STACK_TOP - 16;
+    p->user_stack_top = USER_STACK_TOP - 8;
     p->user_stack_bottom = USER_STACK_TOP - PAGE_SIZE;
     p->main_thread = 0;
     p->pid = next_pid++;

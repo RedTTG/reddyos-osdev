@@ -2,8 +2,6 @@
 
 static uint64_t next_tid = 1;
 
-extern thread_t* current_thread;
-
 static __attribute__((noreturn)) void task_bootstrap(void* arg)
 {
     //__asm__ volatile("sti"); NOTE: The sti is inside switch.asm
@@ -82,6 +80,7 @@ thread_t* thread_create_base(void (*entry)(void* arg))
 
     thread->entry = entry;
     thread->next = 0;
+    memcpy(thread->fpu_state, fpu_default_state, sizeof(thread->fpu_state));
 
     return thread;
 }
