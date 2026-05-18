@@ -67,7 +67,9 @@ long syscall_handler(syscall_args_t* args)
             return args->rax;
         case 2: // open
             const char* path = (char*)args->rdi;
-            args->rax = sys_open(path);
+            const int flags = (int)args->rsi;
+            const int mode = (int)args->rdx;
+            args->rax = sys_open(path, flags, mode);
             return args->rax;
         case 100: // term putc
             const char ch = (char)(uint8_t)args->rdi;

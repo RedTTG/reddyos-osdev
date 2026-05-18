@@ -12,7 +12,7 @@ process_t* process_create(const char* filename)
     if (!filename)
         return 0;
 
-    if (vfs_open(filename, &file) != 0)
+    if (vfs_open(filename, &file, O_RDONLY, 0) != 0)
         return 0;
 
     if (elf_read_info(&file, &info) != 0)

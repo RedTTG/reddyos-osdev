@@ -1,6 +1,6 @@
 #include "common.h"
 
-int vfs_open(const char* path, file_t* out)
+int vfs_open(const char* path, file_t* out, int flags, int mode)
 {
     if (!root_mount)
         return -1;
@@ -20,6 +20,16 @@ int vfs_open(const char* path, file_t* out)
             out->vnode = children[i];
             out->offset = 0;
             out->refcount = 0;
+            out->flags = flags;
+
+            /* Basic handling for O_TRUNC: adjust vnode size and reset offset.
+             * Proper truncation should be implemented by the filesystem's
+             * vnode_ops (if supported). This is a minimal behavior so that
+             * callers relying on truncation don't see stale size/offset. */
+            if (flags & O_TRUNC) {
+                out->vnode->size = 0;
+                out->offset = 0;
+            }
 
             return 0;
         }

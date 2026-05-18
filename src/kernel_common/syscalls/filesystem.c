@@ -1,7 +1,7 @@
 #include "common.h"
 
-long sys_open(const char* path) {
-    return process_fd_open(current_thread->process, path);
+int sys_open(const char* path, int flags, int mode) {
+    return process_fd_open(current_thread->process, path, flags, mode);
 }
 
 long sys_read(const int fd, char *buffer, const size_t size) {

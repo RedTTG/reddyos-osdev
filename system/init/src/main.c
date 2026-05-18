@@ -1,14 +1,16 @@
 #include <stddef.h>
 #include <stdint.h>
 
-static long sys_open(const char* path)
+static long sys_open(const char* path, int flags, int mode)
 {
     long res;
     __asm__ volatile (
         "syscall\n"
         : "=a"(res)
         : "a"(2),
-          "D"(path)
+          "D"(path),
+          "S"(flags),
+          "d"(mode)
         : "rcx", "r11"
     );
     return res;
@@ -120,7 +122,7 @@ void terminal_write_hex_u8(uint8_t value)
 void _start(void)
 {
     terminal_write("\nINIT BEGIN!\n");
-    int fd = sys_open("/test.txt");
+    int fd = sys_open("/test.txt", 0, 0);
 
     if (fd < 0) {
         terminal_write("Failed to open file\n");

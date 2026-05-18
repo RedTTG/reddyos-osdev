@@ -54,14 +54,14 @@ static bool process_fd_extend(process_t* process) {
     return true;
 }
 
-static int of_open(const char *path)
+static int of_open(const char *path, int flags, int mode)
 {
     file_t *file = kmalloc(sizeof(file_t));
 
     if (!file)
         return -1;
 
-    if (vfs_open(path, file)<0) {
+    if (vfs_open(path, file, flags, mode) < 0) {
         kfree(file);
         return -1;
     }
@@ -73,6 +73,9 @@ static int of_open(const char *path)
             if (global_file_table[i] == NULL) {
 
                 global_file_table[i] = file;
+                file->refcount++;
+                /* ensure the on-file flags are recorded */
+                file->flags = flags;
                 return (int)i;
             }
         }
@@ -96,8 +99,8 @@ static int of_close(const int idx) {
     return -1;
 }
 
-int process_fd_open(process_t* process, const char *path) {
-    const int of_idx = of_open(path);
+int process_fd_open(process_t* process, const char *path, int flags, int mode) {
+    const int of_idx = of_open(path, flags, mode);
 
     if (of_idx<0)
         return -1;
