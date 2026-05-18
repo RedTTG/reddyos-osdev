@@ -1,4 +1,5 @@
 #include "common.h"
+#include "fs_flags.h"
 
 static uint64_t next_pid = 1;
 

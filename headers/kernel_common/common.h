@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "types_extra.h"
 
 #include "c_generic/string.h"
 

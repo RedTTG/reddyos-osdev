@@ -9,24 +9,23 @@
 #define EFER_SCE (1 << 0)
 
 typedef struct {
-    uint64_t user_rsp;
-    uint64_t user_rcx;
-    uint64_t user_r11;
+    u64 user_rsp;
+    u64 user_rcx;
+    u64 user_r11;
 } percpu_data_t;
 
 typedef struct {
-    uint64_t rax;  // Syscall number / return value
-    uint64_t rdi;  // Argument 1
-    uint64_t rsi;  // Argument 2
-    uint64_t rdx;  // Argument 3
-    uint64_t r10;  // Argument 4 (R10 is used instead of RCX in syscall ABI)
-    uint64_t r8;   // Argument 5
-    uint64_t r9;   // Argument 6
+    u64 rax;    // rax | Syscall number / return value
+    u64 arg1;   // rdi | Argument 1
+    u64 arg2;   // rsi | Argument 2
+    u64 arg3;   // rdx | Argument 3
+    u64 arg4;   // r10 | Argument 4 (R10 is used instead of RCX in syscall ABI)
+    u64 arg5;   //  r8 | Argument 5
+    u64 arg6;   //  r9 | Argument 6
 } syscall_args_t;
 
-extern void syscall_entry(void);
-extern long syscall_handler(syscall_args_t* args);
-void syscall_init(void);
+typedef u64 (*syscall_fun_t)(const syscall_args_t* args);
 
-// Handlers
-#include "syscalls/filesystem.h"
+extern void syscall_entry(void);
+extern u64 syscall_handler(syscall_args_t* args);
+void syscall_init(void);

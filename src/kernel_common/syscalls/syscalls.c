@@ -1,10 +1,15 @@
 #include "common.h"
+#include "syscalls/def.h"
 
 // Per-CPU data for syscall handler (stores user RSP)
 __attribute__((aligned(16))) static percpu_data_t percpu_data = {0};
 
-// Forward declaration for the current_thread
-extern thread_t* current_thread;
+#define X(id, fn) [id] = fn,
+syscall_fun_t syscall_table[] = {
+    SYSCALLS
+};
+#undef X
+const u64 syscallCount = sizeof(syscall_table) / sizeof(syscall_table[0]);
 
 void syscall_init(void)
 {
@@ -40,7 +45,7 @@ void syscall_init(void)
     );
 }
 
-long syscall_handler(syscall_args_t* args)
+u64 syscall_handler(syscall_args_t* args)
 {
     // args->rax contains the syscall number
     // args->rdi, args->rsi, args->rdx, args->r10, args->r8, args->r9 contain the arguments
@@ -57,44 +62,20 @@ long syscall_handler(syscall_args_t* args)
     //     terminal_write("\n");
     // }
 
-    switch (args->rax)
-    {
-        case 0: // read
-            const int fd = (int)args->rdi;
-            void* buffer = (char*)args->rsi;
-            const size_t size = (size_t)args->rdx;
-            args->rax = do_sys_read(fd, buffer, size);
-            return args->rax;
-        case 1: // write
-            const int fd_w = (int)args->rdi;
-            const void* buffer_w = (char*)args->rsi;
-            const size_t size_w = (size_t)args->rdx;
-            args->rax = do_sys_write(fd_w, buffer_w, size_w);
-            return args->rax;
-        case 2: // open
-            const char* path = (char*)args->rdi;
-            const int flags = (int)args->rsi;
-            const int mode = (int)args->rdx;
-            args->rax = do_sys_open(path, flags, mode);
-            return args->rax;
-        case 3: // close
-            const int fd_c = (int)args->rdi;
-            args->rax = do_sys_close(fd_c);
-            return args->rax;
-        case 100: // term putc
-            const char ch = (char)(uint8_t)args->rdi;
-            terminal_putc(ch);
-            goto okay;
-        default:
-            terminal_write("Unhandled syscall: ");
-            terminal_write_u8(args->rax);
-            terminal_write("\n");
-            goto error;
+    if (args->rax >= syscallCount) {
+        goto fail;
     }
-okay:
-    args->rax = (long)0;
+    syscall_fun_t fun = syscall_table[args->rax];
+    if (fun == NULL) {
+        terminal_write("Unknown syscall: ");
+        terminal_write_u64(args->rax);
+        terminal_write("\n");
+        goto fail;
+    }
+    args->rax = fun(args);
     return args->rax;
-error:
-    args->rax = (long)-1;
-    return -1;
+
+fail:
+    args->rax = (u64)-1;
+    return args->rax; // Invalid syscall number
 }

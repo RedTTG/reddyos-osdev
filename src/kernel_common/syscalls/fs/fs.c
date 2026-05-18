@@ -1,10 +1,11 @@
 #include "common.h"
+#include "syscalls/fs/fs_errors.h"
 
-int do_sys_open(const char* path, int flags, int mode) {
+u64 do_sys_open(const char* path, int flags, int mode) {
     return process_fd_open(current_thread->process, path, flags, mode);
 }
 
-ssize_t do_sys_read(const int fd, void *buffer, const size_t size) {
+u64 do_sys_read(const int fd, void *buffer, const size_t size) {
     if (!buffer || size == 0)
         return -EINVAL;
 
@@ -15,7 +16,7 @@ ssize_t do_sys_read(const int fd, void *buffer, const size_t size) {
     return vfs_read(file, buffer, size);
 }
 
-ssize_t do_sys_write(int fd, const void *buffer, size_t size) {
+u64 do_sys_write(int fd, const void *buffer, size_t size) {
     if (!buffer || size == 0)
         return -EINVAL;
 
@@ -26,7 +27,7 @@ ssize_t do_sys_write(int fd, const void *buffer, size_t size) {
     return vfs_write(file, buffer, size);
 }
 
-int do_sys_close(int fd) {
+u64 do_sys_close(int fd) {
     return process_fd_close(current_thread->process, fd);
 }
 

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "fs_flags.h"
 
 int vfs_open(const char* path, file_t* out, int flags, int mode)
 {
