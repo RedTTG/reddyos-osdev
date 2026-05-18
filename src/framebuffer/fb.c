@@ -93,7 +93,7 @@ static vnode_ops_t fb_ops =
 {
     .read = fb_read,
     .write = fb_write,
-    .ioctl = fb_ioctl
+    .ioctl = fb_ioctl,
 };
 
 void fb_device_init(void) {

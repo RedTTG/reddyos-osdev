@@ -1,6 +1,9 @@
 #pragma once
 #include <stdint.h>
 #include <stdio.h>
+#include <sys/types.h>
+
+#include "stat.h"
 
 inline long sys_open(const char* path, int flags, int mode)
 {
@@ -16,7 +19,7 @@ inline long sys_open(const char* path, int flags, int mode)
     );
     return res;
 }
-inline ssize_t sys_read(int fd, char *buffer, size_t size)
+inline ssize_t sys_read(uint fd, char *buffer, size_t size)
 {
     long res;
     __asm__ volatile (
@@ -26,6 +29,45 @@ inline ssize_t sys_read(int fd, char *buffer, size_t size)
           "D"(fd),
           "S"(buffer),
           "d"(size)
+        : "rcx", "r11"
+    );
+    return res;
+}
+inline ssize_t sys_write(uint fd, const char *buffer, size_t size)
+{
+    long res;
+    __asm__ volatile (
+        "syscall\n"
+        : "=a"(res)
+        : "a"(1),
+          "D"(fd),
+          "S"(buffer),
+          "d"(size)
+        : "rcx", "r11"
+    );
+    return res;
+}
+
+inline long sys_fstat(uint fd, stat_t* stat) {
+    long res;
+    __asm__ volatile (
+        "syscall\n"
+        : "=a"(res)
+        : "a"(5),
+        "D"(fd),
+        "S"(stat)
+        : "rcx", "r11"
+    );
+    return res;
+}
+inline long sys_stat(const char* filename, stat_t* stat) {
+    long res;
+    __asm__ volatile (
+        "syscall\n"
+        : "=a"(res)
+        : "a"(4),
+        "D"(filename),
+        "S"(stat)
         : "rcx", "r11"
     );
     return res;

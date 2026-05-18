@@ -1,4 +1,5 @@
 #pragma once
+#include "stat.h"
 typedef struct vnode vnode_t;
 
 typedef struct vnode_ops
@@ -28,7 +29,7 @@ typedef struct vnode
 {
     char name[64];
 
-    uint64_t size;
+    int64_t size;
 
     vnode_ops_t* ops;
 

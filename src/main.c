@@ -90,6 +90,7 @@ void kmain(void) {
     // Initialize
     init_memory();
     init_interrupts();
+    fpu_init();
 
     irq_register_handler(32, timer_handler);
 

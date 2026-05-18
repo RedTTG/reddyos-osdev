@@ -1,5 +1,6 @@
 #include "common.h"
 #include "fs_flags.h"
+#include "stat.h"
 
 void* vfs_find_vnode(const char* path) {
     if (!root_mount)
@@ -108,6 +109,8 @@ int vfs_dir_count(const char* path) {
 
 int vfs_open(const char* path, file_t* out, int flags, int mode)
 {
+    (void)mode;
+
     if (!root_mount)
         return -1;
 
@@ -179,6 +182,63 @@ int vfs_ioctl(file_t *file, uint64_t cmd, void *arg)
         return -1;  // Operation not supported
 
     return file->vnode->ops->ioctl(file->vnode, cmd, arg);
+}
+
+int vfs_stat(vnode_t *node, stat_t *buffer) {
+    if (!node || !buffer)
+        return -1;
+
+    memset(buffer, 0, sizeof(*buffer));
+
+    buffer->st_dev = 1;
+    buffer->st_ino = (uint64_t)(uintptr_t)node;
+    buffer->st_uid = 0;
+    buffer->st_gid = 0;
+    buffer->st_blksize = 512;
+    buffer->st_ctime = 0;
+    buffer->st_mtime = 0;
+    buffer->st_atime = 0;
+
+    const int is_dir = (node->ops == NULL && node->internal != NULL);
+    const int is_chr = (node->ops != NULL && node->ops->ioctl != NULL);
+
+    if (is_dir) {
+        vnode_t** children = (vnode_t**)node->internal;
+        uint64_t count = 0;
+
+        if (children) {
+            for (int i = 0; children[i]; i++)
+                count++;
+        }
+
+        buffer->st_mode = S_IFDIR | S_IRUSR | S_IRGRP | S_IROTH |
+                          S_IXUSR | S_IXGRP | S_IXOTH;
+        buffer->st_size = (int64_t)count;
+        buffer->st_nlink = 2;
+        buffer->st_blocks = 0;
+        return 0;
+    }
+
+    if (is_chr) {
+        buffer->st_mode = S_IFCHR | S_IRUSR | S_IWUSR |
+                          S_IRGRP | S_IWGRP |
+                          S_IROTH | S_IWOTH;
+        buffer->st_size = node->size;
+        buffer->st_nlink = 1;
+        buffer->st_rdev = buffer->st_ino;
+        buffer->st_blocks = (buffer->st_size + 511) / 512;
+        return 0;
+    }
+
+    buffer->st_mode = S_IFREG | S_IRUSR | S_IRGRP | S_IROTH;
+    if (node->ops != NULL && node->ops->write != NULL)
+        buffer->st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
+
+    buffer->st_size = node->size;
+    buffer->st_nlink = 1;
+    buffer->st_blocks = (buffer->st_size + 511) / 512;
+
+    return 0;
 }
 
 off_t vfs_lseek(file_t *file, off_t offset, int whence)

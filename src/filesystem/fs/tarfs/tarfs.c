@@ -1,4 +1,5 @@
 #include "common.h"
+#include "fs_flags.h"
 
 typedef struct tar_header {
     char name[100];
@@ -28,6 +29,18 @@ static int tar_read(
     memcpy(buffer, data + offset, size);
 
     return (int)size;
+}
+
+static int tar_stat(vnode_t *vnode, stat_t *buffer) {
+    if (!vnode || !buffer)
+        return -1;
+
+    memset(buffer, 0, sizeof(stat_t));
+
+    buffer->st_mode = S_IFREG | S_IRUSR | S_IRGRP | S_IROTH;
+    buffer->st_size = vnode->size;
+
+    return 0;
 }
 
 static vnode_ops_t tar_ops =

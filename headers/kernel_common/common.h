@@ -26,7 +26,9 @@
 #include "framebuffer/fb.h"
 
 // INIT
+
 #include "pit.h"
+#include "fpu.h"
 
 // INTERRUPTS
 #include "idt.h"
