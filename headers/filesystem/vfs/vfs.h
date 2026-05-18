@@ -1,13 +1,20 @@
 #pragma once
 #include "files.h"
 
+// lseek whence constants
+#define SEEK_SET 0  // Beginning of file
+#define SEEK_CUR 1  // Current position
+#define SEEK_END 2  // End of file
+
 int vfs_open(const char* path, file_t* out, int flags, int mode);
 
 ssize_t vfs_read(file_t *file, void *buffer, uint64_t size);
 
 ssize_t vfs_write(file_t *file, const void *buffer, uint64_t size);
 
-int vfs_ioctl(file_t *file, uint64_t request, void *arg);
+int vfs_ioctl(file_t *file, uint64_t cmd, void *arg);
+
+off_t vfs_lseek(file_t *file, off_t offset, int whence);
 
 void vfs_close(file_t* file);
 

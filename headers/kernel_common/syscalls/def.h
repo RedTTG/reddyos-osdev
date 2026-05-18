@@ -8,6 +8,7 @@ X(0,  sys_read) \
 X(1, sys_write) \
 X(2,  sys_open) \
 X(3, sys_close) \
+X(8, sys_lseek) \
 X(16, sys_ioctl) \
 X(100, sys_term) \
 

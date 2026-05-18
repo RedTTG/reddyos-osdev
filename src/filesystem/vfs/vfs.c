@@ -170,7 +170,7 @@ ssize_t vfs_write(
     return write;
 }
 
-int vfs_ioctl(file_t *file, uint64_t request, void *arg)
+int vfs_ioctl(file_t *file, uint64_t cmd, void *arg)
 {
     if (!file || !file->vnode || !file->vnode->ops)
         return -1;
@@ -178,5 +178,36 @@ int vfs_ioctl(file_t *file, uint64_t request, void *arg)
     if (!file->vnode->ops->ioctl)
         return -1;  // Operation not supported
 
-    return file->vnode->ops->ioctl(file->vnode, request, arg);
+    return file->vnode->ops->ioctl(file->vnode, cmd, arg);
+}
+
+off_t vfs_lseek(file_t *file, off_t offset, int whence)
+{
+    if (!file || !file->vnode)
+        return -1;
+
+    off_t new_offset = 0;
+
+    switch (whence) {
+        case SEEK_SET:
+            new_offset = offset;
+            break;
+        case SEEK_CUR:
+            new_offset = (off_t)file->offset + offset;
+            break;
+        case SEEK_END:
+            new_offset = (off_t)file->vnode->size + offset;
+            break;
+        default:
+            return -1;  // Invalid whence
+    }
+
+    // Clamp to valid range [0, vnode->size]
+    if (new_offset < 0)
+        new_offset = 0;
+    if (new_offset > (off_t)file->vnode->size)
+        new_offset = (off_t)file->vnode->size;
+
+    file->offset = (uint64_t)new_offset;
+    return new_offset;
 }

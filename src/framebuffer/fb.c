@@ -56,10 +56,10 @@ static int fb_write(vnode_t *vnode, uint64_t offset, const void *buffer, uint64_
     return (int)size;
 }
 
-static int fb_ioctl(vnode_t *vnode, uint64_t request, void *arg) {
+static int fb_ioctl(vnode_t *vnode, uint64_t cmd, void *arg) {
     reddyos_framebuffer_t* fb = (reddyos_framebuffer_t*)vnode->internal;
 
-    switch (request) {
+    switch (cmd) {
         case FB_IOCTL_FLIP:
             if (fb)
                 memcpy(fb->front, fb->back, fb->size);

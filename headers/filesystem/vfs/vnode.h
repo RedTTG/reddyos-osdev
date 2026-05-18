@@ -19,7 +19,7 @@ typedef struct vnode_ops
 
     int (*ioctl)(
         vnode_t* node,
-        uint64_t request,
+        uint64_t cmd,
         void* arg
     );
 } vnode_ops_t;
