@@ -1,4 +1,5 @@
 #include "common.h"
+#include "../../../headers/kernel_common/syscalls/errors.h"
 #include "syscalls/def.h"
 
 // Per-CPU data for syscall handler (stores user RSP)
@@ -70,7 +71,8 @@ u64 syscall_handler(syscall_args_t* args)
         terminal_write("Unknown syscall: ");
         terminal_write_u64(args->rax);
         terminal_write("\n");
-        goto fail;
+        args->rax = -ENOSYS;
+        return args->rax;
     }
     args->rax = fun(args);
     return args->rax;

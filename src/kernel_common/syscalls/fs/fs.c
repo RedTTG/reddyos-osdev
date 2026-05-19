@@ -3,7 +3,7 @@
 
 #include <asm-generic/errno-base.h>
 
-#include "syscalls/fs/fs_errors.h"
+#include "../../../../headers/kernel_common/syscalls/errors.h"
 
 u64 do_sys_open(const char* path, int flags, int mode) {
     return process_fd_open(current_thread->process, path, flags, mode);
