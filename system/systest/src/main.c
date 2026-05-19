@@ -4,7 +4,7 @@
 
 void _start(void)
 {
-    terminal_write("\nINIT BEGIN!\n");
+    terminal_write("\nSYSTEST BEGIN!\n");
     terminal_write("\nTesting SYSCALLS\n");
     // sys open
     long fd = sys_open("test.txt", 0, 0);

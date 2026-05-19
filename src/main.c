@@ -17,18 +17,21 @@ void timer_handler(const interrupt_frame_t* frame)
 
 void load_init(void* arg)
 {
+    static const char* init_filename = "/bin/systest";
     (void)arg;
-    process_t* process = process_create("/bin/init");
+    process_t* process = process_create(init_filename);
     thread_t* user_thread;
 
     if (!process)
-        panic("Failed to create process for /bin/init");
+        panic("Failed to create init process");
 
     user_thread = user_thread_create(process);
     if (!user_thread)
-        panic("Failed to create user thread for /bin/init");
+        panic("Failed to create user thread for init process");
 
-    terminal_write("Created user thread for /bin/init\n");
+    terminal_write("Created user thread for ");
+    terminal_write(init_filename);
+    terminal_write("\n");
     scheduler_add(user_thread);
 }
 

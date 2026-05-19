@@ -150,17 +150,20 @@ file(GLOB_RECURSE INITRD_ROOT_FILES CONFIGURE_DEPENDS
 
 set(INITRD_ROOT_DIR "${CMAKE_SOURCE_DIR}/dist/root")
 set(INITRD_TAR "${CMAKE_SOURCE_DIR}/dist/bin/initrd.tar")
+file(GLOB SYSTEM_BINARIES CONFIGURE_DEPENDS
+        "${CMAKE_SOURCE_DIR}/dist/bin/system/*"
+)
 
 add_custom_command(
         OUTPUT "${INITRD_TAR}"
         COMMAND "${CMAKE_COMMAND}" -E rm -rf "${INITRD_ROOT_DIR}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${INITRD_ROOT_DIR}"
         COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_SOURCE_DIR}/files" "${INITRD_ROOT_DIR}"
-        # Ensure bin dir exists inside the root and copy the built init executable into it.
+        # Ensure bin dir exists inside the root and copy every built system program into it.
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${INITRD_ROOT_DIR}/bin"
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_SOURCE_DIR}/dist/bin/system/init" "${INITRD_ROOT_DIR}/bin/init"
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_SOURCE_DIR}/dist/bin/system" "${INITRD_ROOT_DIR}/bin"
         COMMAND tar -cf "${INITRD_TAR}" -C "${INITRD_ROOT_DIR}" .
-        DEPENDS ${INITRD_ROOT_FILES} "${CMAKE_SOURCE_DIR}/dist/bin/system/init"
+        DEPENDS ${INITRD_ROOT_FILES} ${SYSTEM_BINARIES}
         VERBATIM
 )
 
@@ -168,11 +171,10 @@ add_custom_target(initrd_tar ALL DEPENDS "${INITRD_TAR}")
 
 # Build the small userspace `init` program and make sure it's available under
 # dist/bin so the initrd packaging step above can copy it into dist/root/bin.
-add_subdirectory(system/init)
+add_subdirectory(system/)
 
-# Ensure the packaging target depends on the `init` target so the init ELF is
-# built before the TAR is created.
-add_dependencies(initrd_tar init)
+# Add system programs as a dependency
+add_dependencies(initrd_tar systest)
 
 # Add linker script as a dependency
 set_target_properties(reddyos PROPERTIES
