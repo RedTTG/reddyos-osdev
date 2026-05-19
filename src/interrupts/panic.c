@@ -59,17 +59,34 @@ void panic_isr(const char* msg, const interrupt_frame_t* frame)
     terminal_write_hex_u64(frame->error_code);
     terminal_write("\n");
     terminal_write("PAGE INFO: ");
-    if (frame->error_code & 0x1) terminal_write("Present | ");
-    else terminal_write("Not Present!!! | ");
-    if (frame->error_code & 0x2) terminal_write("Read/Write, ");
-    else terminal_write("Read only, ");
-    if (frame->error_code & 0x4) terminal_write("User, ");
-    else terminal_write("Kernel, ");
-    if (frame->error_code & 0x8) terminal_write("Reserved Write, ");
-    else terminal_write("No Reserved Write, ");
-    if (frame->error_code & 0x10) terminal_write("INSTRUCTION");
-    else terminal_write("DATA");
-    terminal_write("\n");
+    /* Present / Not present */
+    if (frame->error_code & 0x1)
+        terminal_write("Protection Violation | ");
+    else
+        terminal_write("Page Not Present | ");
+
+    /* Read / Write */
+    if (frame->error_code & 0x2)
+        terminal_write("Write | ");
+    else
+        terminal_write("Read | ");
+
+    /* User / Kernel */
+    if (frame->error_code & 0x4)
+        terminal_write("User Mode | ");
+    else
+        terminal_write("Kernel Mode | ");
+
+    /* Reserved bit violation */
+    if (frame->error_code & 0x8)
+        terminal_write("RSVD Violation | ");
+    else
+        terminal_write("No RSVD Issue | ");
+    /* Instruction fetch vs data access */
+    if (frame->error_code & 0x10)
+        terminal_write("Instruction Fetch (NX violation)\n");
+    else
+        terminal_write("Data Access\n");
 
     terminal_write("RIP: ");
     terminal_write_hex_u64(frame->rip);

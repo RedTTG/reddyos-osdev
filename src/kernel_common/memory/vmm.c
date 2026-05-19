@@ -103,11 +103,15 @@ static uint64_t* get_next(uint64_t* table, const size_t index, const uint64_t fl
     {
         uint64_t* new_table = alloc_table();
 
+        /* Do not propagate NX or other leaf-only flags into intermediate
+         * page-table entries. Only copy user/cache/wthru hints. */
+        uint64_t table_flags = flags & (PAGE_USER | PAGE_WTHRU | PAGE_NOCACHE);
+
         table[index] =
             virt_to_phys((uint64_t)new_table) |
             PAGE_PRESENT |
             PAGE_WRITABLE |
-            flags;
+            table_flags;
     }
 
     return phys_to_virt(table[index] & PAGE_MASK);

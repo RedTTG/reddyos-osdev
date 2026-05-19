@@ -43,8 +43,8 @@ static uint64_t segment_flags(uint32_t elf_flags)
     if (elf_flags & PF_W)
         flags |= PAGE_WRITABLE;
 
-    // if (!(elf_flags & PF_X))
-    //     flags |= PAGE_NOEXEC;
+    if (!(elf_flags & PF_X))
+        flags |= PAGE_NOEXEC;
 
     return flags;
 }

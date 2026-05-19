@@ -12,7 +12,7 @@ typedef struct elf_info {
     uint64_t base;
 } elf_info_t;
 
-typedef struct {
+typedef struct __attribute__((packed)) {
     uint8_t magic[4];
     uint8_t class;
     uint8_t data;
@@ -33,7 +33,7 @@ typedef struct {
     uint16_t shstrndx;
 } elf_header_t;
 
-typedef struct {
+typedef struct __attribute__((packed)) {
     uint32_t type;
     uint32_t flags;
     uint64_t offset;
