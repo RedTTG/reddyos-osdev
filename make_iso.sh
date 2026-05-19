@@ -6,11 +6,43 @@ set -e
 cd dist
 # Download the latest Limine binary release, only if not already present.
 if [ ! -d "limine-binary" ]; then
-    curl -L https://github.com/Limine-Bootloader/Limine/releases/latest/download/limine-binary.tar.gz | gunzip | tar -xf -
+    curl -L https://github.com/Limine-Bootloader/Limine/releases/download/v12.2.0/limine-binary.tar.gz | gunzip | tar -x
 fi
 
-# Build "limine" utility.
-make -C limine-binary
+# Build "limine" as a static host tool. Prefer a linux-gnu compiler and avoid
+# musl-targeted compilers in the userspace app toolchain.
+HOST_CC=""
+for cc in gcc cc clang; do
+    if ! command -v "$cc" >/dev/null 2>&1; then
+        continue
+    fi
+    cc_path=$(command -v "$cc")
+    triplet=$($cc_path -dumpmachine 2>/dev/null || true)
+    if [[ "$triplet" == *musl* ]]; then
+        continue
+    fi
+    if [[ "$triplet" == *linux-gnu* ]]; then
+        HOST_CC="$cc_path"
+        break
+    fi
+    if [ -z "$HOST_CC" ]; then
+        HOST_CC="$cc_path"
+    fi
+done
+
+if [ -z "$HOST_CC" ]; then
+    echo "No suitable non-musl host C compiler found for building limine." >&2
+    exit 1
+fi
+
+make -C limine-binary clean
+make -C limine-binary CC="$HOST_CC" LDFLAGS="-static"
+
+# Ensure limine is static so it does not depend on a host dynamic loader.
+if readelf -l limine-binary/limine | grep -q "Requesting program interpreter"; then
+    echo "limine is dynamically linked; expected a static binary." >&2
+    exit 1
+fi
 
 # Create a directory which will be our ISO root.
 mkdir -p iso_root

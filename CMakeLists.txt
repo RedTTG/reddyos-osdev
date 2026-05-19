@@ -173,8 +173,8 @@ add_custom_target(initrd_tar ALL DEPENDS "${INITRD_TAR}")
 # dist/bin so the initrd packaging step above can copy it into dist/root/bin.
 add_subdirectory(system/)
 
-# Add system programs as a dependency
-add_dependencies(initrd_tar systest)
+# Add system programs as dependencies
+add_dependencies(initrd_tar systest init)
 
 # Add linker script as a dependency
 set_target_properties(reddyos PROPERTIES
