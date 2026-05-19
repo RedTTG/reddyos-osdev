@@ -7,6 +7,7 @@
 #define IA32_KERNEL_GSBASE  0xC0000102
 
 #define EFER_SCE (1 << 0)
+#define EFER_NXE (1 << 11)
 
 typedef struct {
     u64 user_rsp;

@@ -23,7 +23,7 @@ void syscall_init(void)
     // Enable syscalls
     wrmsr(
         IA32_EFER,
-        rdmsr(IA32_EFER) | EFER_SCE
+        rdmsr(IA32_EFER) | EFER_SCE | EFER_NXE
     );
 
     // Star selectors
