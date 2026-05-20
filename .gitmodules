@@ -1,3 +1,9 @@
 [submodule "mlibc"]
-	path = mlibc
+	path = toolchain/mlibc
 	url = https://github.com/RedTTG/mlibc.git
+[submodule "toolchain/gcc"]
+	path = toolchain/gcc
+	url = https://github.com/RedTTG/gcc-reddyos.git
+[submodule "toolchain/binutils"]
+	path = toolchain/binutils
+	url = https://github.com/RedTTG/binutils-gdb-reddyos.git
