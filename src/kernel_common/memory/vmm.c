@@ -269,7 +269,7 @@ uint64_t vmm_virt_to_phys_as(address_space_t* as, uint64_t virt)
     return (pt[pt_i] & PAGE_MASK) | (virt & 0xFFF);
 }
 
-void* vmm_translate(address_space_t* as, uint64_t virt)
+void* vmm_kernel_ap(address_space_t* as, uint64_t virt)
 {
     uint64_t phys = vmm_virt_to_phys_as(as, virt);
 

@@ -155,11 +155,11 @@ int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_inf
         //memset((void*)map_start, 0xFF, map_end - map_start);
 
         file->offset = ph.offset;
-        if (read_exact(file, vmm_translate(as, ph.vaddr), ph.filesz) < 0)
+        if (read_exact(file, vmm_kernel_ap(as, ph.vaddr), ph.filesz) < 0)
             goto fail;
 
         if (ph.memsz > ph.filesz)
-            memset(vmm_translate(as, ph.vaddr + ph.filesz), 0, ph.memsz - ph.filesz);
+            memset(vmm_kernel_ap(as, ph.vaddr + ph.filesz), 0, ph.memsz - ph.filesz);
     }
 
     return 0;

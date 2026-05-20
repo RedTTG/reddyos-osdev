@@ -53,6 +53,6 @@ address_space_t paging_create_address_space(void);
 void paging_copy_kernel_half(address_space_t* as);
 void paging_destroy_address_space(address_space_t* as);
 
-void* vmm_translate(address_space_t* as, uint64_t virt);
+void* vmm_kernel_ap(address_space_t* as, uint64_t virt);
 
 uint64_t vmm_map_page(uint64_t phys, uint64_t flags);

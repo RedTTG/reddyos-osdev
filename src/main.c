@@ -17,7 +17,7 @@ void timer_handler(const interrupt_frame_t* frame)
 
 void load_init(void* arg)
 {
-    static const char* init_filename = "/bin/systest";
+    static const char* init_filename = "/bin/init";
     (void)arg;
     process_t* process = process_create(init_filename);
     thread_t* user_thread;

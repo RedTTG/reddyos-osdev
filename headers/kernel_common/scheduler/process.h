@@ -8,7 +8,7 @@ typedef struct process {
 
     uint64_t entry_point;
 
-    uint64_t user_stack_top;
+    uint64_t rsp;
     uint64_t user_stack_bottom;
     uint64_t user_stack_bottom_max;
 

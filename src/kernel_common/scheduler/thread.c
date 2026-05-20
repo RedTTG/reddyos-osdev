@@ -110,7 +110,7 @@ thread_t* user_thread_create(process_t* process) {
     }
 
     thread->process = process;
-    thread->user_stack = (void*)process->user_stack_top;
+    thread->user_stack = (void*)process->rsp;
     process->main_thread = thread;
     setup_user_stack(thread, (void (*)(void*))process->entry_point);
     return thread;
