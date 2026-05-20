@@ -26,16 +26,41 @@ void setup_process_stack(process_t* p, const char* filename) {
         ((uintptr_t)sp & ~0xFULL);
 
     /*
+     * Reserve AT_RANDOM storage so libc has a valid pointer during startup.
+     */
+    push_u64(&sp, 0);
+    push_u64(&sp, 0);
+    uint8_t* random_ptr = (uint8_t*)sp;
+
+    /*
      * Auxiliary vector
      */
-
-    push_auxv(&sp, AT_NULL, 0);
 
     push_auxv(
         &sp,
         AT_PAGESZ,
         PAGE_SIZE
     );
+
+    push_auxv(
+        &sp,
+        AT_ENTRY,
+        p->entry_point
+    );
+
+    push_auxv(
+        &sp,
+        AT_RANDOM,
+        (uint64_t)random_ptr
+    );
+
+    push_auxv(
+        &sp,
+        AT_EXECFN,
+        (uint64_t)prog_name_ptr
+    );
+
+    push_auxv(&sp, AT_NULL, 0);
 
     /*
      * envp[]
@@ -96,35 +121,47 @@ process_t* process_create(const char* filename)
     }
 
     p->entry_point = info.entry;
-    p->rsp = USER_STACK_TOP - 8;
-    p->user_stack_bottom = USER_STACK_TOP - PAGE_SIZE;
+    p->rsp = USER_STACK_TOP;
+    p->user_stack_bottom = USER_STACK_TOP - (8 * PAGE_SIZE);
+    p->user_stack_bottom_max = p->user_stack_bottom;
     p->main_thread = 0;
     p->pid = next_pid++;
 
-    void* stack_phys = pmm_alloc_page();
+    enum { USER_STACK_PAGES = 8 };
+    void* stack_phys_pages[USER_STACK_PAGES] = {0};
 
-    if (!stack_phys)
+    for (size_t i = 0; i < USER_STACK_PAGES; i++)
     {
-        paging_destroy_address_space(&p->address_space);
-        kfree(p);
-        return 0;
+        void* stack_phys = pmm_alloc_page();
+
+        if (!stack_phys)
+        {
+            for (size_t j = 0; j < i; j++)
+                pmm_free_page(stack_phys_pages[j]);
+
+            paging_destroy_address_space(&p->address_space);
+            kfree(p);
+            return 0;
+        }
+
+        stack_phys_pages[i] = stack_phys;
+        memset(VIRT(stack_phys), 0, PAGE_SIZE);
+
+        // Map the stack
+        vmm_map(
+            &p->address_space,
+            p->user_stack_bottom + (i * PAGE_SIZE),
+            (uint64_t)stack_phys,
+            PAGE_USER | PAGE_WRITABLE | PAGE_PRESENT
+        );
     }
-
-    memset(VIRT(stack_phys), 0, PAGE_SIZE);
-
-    // Map the stack
-    vmm_map(
-        &p->address_space,
-        p->user_stack_bottom,
-        (uint64_t)stack_phys,
-        PAGE_USER | PAGE_WRITABLE | PAGE_PRESENT
-    );
 
     if (elf_load_into_address_space(&p->address_space, &file, &info) != 0)
     {
         paging_destroy_address_space(&p->address_space);
         kfree(p);
-        pmm_free_page(stack_phys);
+        for (size_t i = 0; i < USER_STACK_PAGES; i++)
+            pmm_free_page(stack_phys_pages[i]);
         return 0;
     }
 

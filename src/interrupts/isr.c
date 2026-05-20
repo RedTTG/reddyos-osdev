@@ -32,6 +32,20 @@ void isr_handler(interrupt_frame_t* frame)
     //     terminal_write_hex_u64(current_thread->process->user_stack_bottom);
     //     terminal_write("\n");
     // }
+    // if (frame->interrupt_number == 13 && current_thread && current_thread->process) {
+    //     // Only handle faults that originated from user mode (CPL == 3)
+    //     if ((frame->cs & 0x3) == 3) {
+    //         void* instr = vmm_kernel_ap(&current_thread->process->address_space, frame->rip);
+    //         if (instr) {
+    //             uint8_t opcode = *(uint8_t*)instr;
+    //             // HLT opcode is 0xF4
+    //             if (opcode == 0xF4) {
+    //                 frame->rip += 1;
+    //                 return;
+    //             }
+    //         }
+    //     }
+    // }
 
     char buffer[64];
     char* p = buffer;

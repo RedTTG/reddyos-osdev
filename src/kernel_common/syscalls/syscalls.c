@@ -64,10 +64,11 @@ u64 syscall_handler(syscall_args_t* args)
     // }
 
     if (args->rax >= syscallCount) {
-        goto fail;
+        goto enosys;
     }
     syscall_fun_t fun = syscall_table[args->rax];
     if (fun == NULL) {
+        enosys:
         terminal_write("Unknown syscall: ");
         terminal_write_u64(args->rax);
         terminal_write("\n");
@@ -76,8 +77,4 @@ u64 syscall_handler(syscall_args_t* args)
     }
     args->rax = fun(args);
     return args->rax;
-
-fail:
-    args->rax = (u64)-1;
-    return args->rax; // Invalid syscall number
 }
