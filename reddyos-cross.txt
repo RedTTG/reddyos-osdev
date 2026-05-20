@@ -1,0 +1,15 @@
+[host_machine]
+system = 'reddyos'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'
+
+[binaries]
+c = 'x86_64-elf-gcc'
+cpp = 'x86_64-elf-g++'
+ar = 'x86_64-elf-ar'
+strip = 'x86_64-elf-strip'
+
+[built-in options]
+c_args = ['-ffreestanding', '-nostdlib']
+cpp_args = ['-ffreestanding', '-nostdlib']
