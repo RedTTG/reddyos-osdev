@@ -1,3 +1,4 @@
+#include "common.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -21,6 +22,13 @@ void *memcpy(void *restrict dest, const void *restrict src, size_t n) {
 
 void *memset(void *s, int c, size_t n) {
     uint8_t *p = s;
+    uint64_t bad = (uint64_t)s;
+    if (bad == 0) {
+        panic("BAD MEMSET");
+    }
+    terminal_write("MEMSET: ");
+    terminal_write_hex_u64((uint64_t)s);
+    terminal_write("\n");
 
     for (size_t i = 0; i < n; i++) {
         p[i] = (uint8_t)c;

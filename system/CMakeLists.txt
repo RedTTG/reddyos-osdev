@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.20)
 
-# Use the musl userspace compiler for system/ targets by default. Setting
-# CMAKE_C_COMPILER before calling project() makes this directory use the
-# musl toolchain while the top-level kernel build can keep using clang.
-find_program(MUSL_C_COMPILER
-        NAMES x86_64-unknown-linux-musl-gcc musl-gcc
+find_program(REDDYOS_C_COMPILER
+        NAMES x86_64-reddyos-gcc
+        PATHS ${CMAKE_SOURCE_DIR}/toolchain/dist/usr/bin
+        PATHS ${CMAKE_SOURCE_DIR}/toolchain/sysroot/usr/lib
+        PATHS ${CMAKE_SOURCE_DIR}/toolchain/dist/usr/lib/gcc/x86_64-reddyos/16.1.0
         REQUIRED
 )
-set(CMAKE_C_COMPILER "${MUSL_C_COMPILER}" CACHE FILEPATH "C compiler" FORCE)
+set(CMAKE_C_COMPILER "${REDDYOS_C_COMPILER}" CACHE FILEPATH "C compiler" FORCE)
 
 project(systest C)
 

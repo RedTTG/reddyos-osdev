@@ -5,10 +5,10 @@ cpu = 'x86_64'
 endian = 'little'
 
 [binaries]
-c = 'x86_64-elf-gcc'
-cpp = 'x86_64-elf-g++'
-ar = 'x86_64-elf-ar'
-strip = 'x86_64-elf-strip'
+c = 'x86_64-reddyos-gcc'
+cpp = 'x86_64-reddyos-g++'
+ar = 'x86_64-reddyos-ar'
+strip = 'x86_64-reddyos-strip'
 
 [built-in options]
 c_args = ['-ffreestanding', '-nostdlib']

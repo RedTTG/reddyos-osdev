@@ -22,6 +22,9 @@
         zsh
         ninja
 
+        gcc
+        glibc.static
+
         # freestanding kernel toolchain
         cross-embedded.buildPackages.gcc
         cross-embedded.buildPackages.binutils

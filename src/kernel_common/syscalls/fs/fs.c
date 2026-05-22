@@ -1,8 +1,6 @@
 #include "common.h"
 #include "syscalls/fs/fs.h"
 
-#include <asm-generic/errno-base.h>
-
 #include "../../../../headers/kernel_common/syscalls/errors.h"
 
 u64 do_sys_open(const char* path, int flags, int mode) {
