@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 3.20)
 
+include(FetchContent)
+FetchContent_Declare(
+        uacpi
+        GIT_REPOSITORY https://github.com/uACPI/uACPI.git
+        GIT_TAG 4.0.0
+)
+
+FetchContent_MakeAvailable(uacpi)
+
+include(${uacpi_SOURCE_DIR}/uacpi.cmake)
+
 project(reddyos C ASM_NASM)
 
 set(CMAKE_C_STANDARD 11)
@@ -104,6 +115,7 @@ set_source_files_properties(${ASM_GAS_SOURCES}
 # Create the executable
 add_executable(reddyos
         ${C_SOURCES}
+        ${UACPI_SOURCES}
         ${ASM_NASM_SOURCES}
         ${ASM_GAS_SOURCES}
 )
@@ -118,7 +130,7 @@ endforeach()
 # globally). This prevents subdirectories (like system/) from inheriting kernel
 # headers and ensures system apps use the toolchain/sysroot headers instead.
 target_include_directories(reddyos PRIVATE
-        ${CMAKE_SOURCE_DIR}/src
+        ${UACPI_INCLUDES}
         ${CMAKE_SOURCE_DIR}/headers
         ${_HEADER_DIRS}
 )
