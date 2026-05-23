@@ -10,38 +10,25 @@ void setup_process_stack(process_t* p, const char* filename, const elf_info_t* i
     u64* stack_top = (void*)p->rsp;
     u64* sp = stack_top;
 
-    /*
-     * Put strings onto stack first.
-     */
+
+    // Put strings onto stack first.
     char *prog_name_ptr =
         push_string(
             &sp,
             filename
         );
 
-    /*
-     * Align before pushing pointers.
-     */
+    // Align before pushing pointers.
     sp = (uint64_t*)
         ((uintptr_t)sp & ~0xFULL);
 
-    /*
-     * Reserve AT_RANDOM storage so libc has a valid pointer during startup.
-     */
+    // Reserve AT_RANDOM storage so libc has a valid pointer during startup.
     push_u64(&sp, 0);
     push_u64(&sp, 0);
     uint8_t* random_ptr = (uint8_t*)sp;
 
-    /*
-     * Auxiliary vector
-     */
-
-    /*
-     * Because the stack grows downward we must push the auxiliary vector
-     * entries in reverse order so that in memory (increasing addresses)
-     * they appear in order with AT_NULL last.
-     * Push the terminator first, then the entries in reverse.
-     */
+    // Auxiliary vector
+    // AUXV (STACK GROWS DOWNWARDS, terminator first)
     push_auxv(&sp, AT_NULL, 0);
 
     push_auxv(
@@ -80,31 +67,24 @@ void setup_process_stack(process_t* p, const char* filename, const elf_info_t* i
         (uint64_t)info->phentsize
     );
 
-    /* AT_PHDR: For static binaries, this is typically not loaded into user space.
-     * Set to 0 to indicate headers are not accessible.
-     */
+    // AT_PHDR: For static binaries, this is typically not loaded into user space.
+    // Set to 0 to indicate headers are not accessible.
     push_auxv(
         &sp,
         AT_PHDR,
         (uint64_t)info->phdr
     );
 
-    /*
-     * envp[]
-     */
+    // envp[]
 
     push_ptr(&sp, NULL);
 
-    /*
-     * argv[]
-     */
+    // argv[]
 
     push_ptr(&sp, NULL);
     push_ptr(&sp, prog_name_ptr);
 
-    /*
-     * argc
-     */
+    // argc
 
     push_u64(&sp, 1);
 
