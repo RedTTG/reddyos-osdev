@@ -1,6 +1,8 @@
 #pragma once
 #include <stdint.h>
 
+#define SIGNATURE(x) (*(uint32_t*)(x))
+
 typedef struct {
     char signature[8];
     uint8_t checksum;
@@ -75,6 +77,11 @@ typedef struct
     uint32_t ioapic_addr;
     uint32_t gsi_base;
 } __attribute__((packed)) madt_ioapic_t;
+
+typedef struct madt_entries {
+    uint64_t count;
+    void** entries;
+} acpi_table_entries_t;
 
 extern uint32_t lapic_address;
 extern uint32_t ioapic_address;
