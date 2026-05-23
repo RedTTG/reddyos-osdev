@@ -29,9 +29,9 @@ void load_init(void* arg)
     if (!user_thread)
         panic("Failed to create user thread for init process");
 
-    terminal_write("Created user thread for ");
-    terminal_write(init_filename);
-    terminal_write("\n");
+    // terminal_write("Created user thread for ");
+    // terminal_write(init_filename);
+    // terminal_write("\n");
     scheduler_add(user_thread);
 }
 
@@ -59,7 +59,7 @@ void init_memory(void) {
     // Paging and physical memory management
     pmm_init();
     vmm_init();
-    terminal_write("Memory initialized!\n");
+    // terminal_write("Memory initialized!\n");
 }
 
 void init_filesystem(void) {
@@ -85,10 +85,10 @@ void kmain(void) {
 
     terminal_init();
     terminal_write("Booted\n");
-    terminal_write("CR3 addr at boot: ");
-    uint64_t cr3 = (uint64_t)memvirt(paging_current_cr3());
-    terminal_write_hex_u64(cr3);
-    terminal_write("\n");
+    // terminal_write("CR3 addr at boot: ");
+    // uint64_t cr3 = (uint64_t)memvirt(paging_current_cr3());
+    // terminal_write_hex_u64(cr3);
+    // terminal_write("\n");
 
     // Initialize
     init_memory();
