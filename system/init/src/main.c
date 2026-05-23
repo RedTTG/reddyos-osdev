@@ -1,26 +1,21 @@
-static inline void term_putc(char c) {
-	register long rax asm("rax") = 100;  /* sys_term */
-	register long rdi asm("rdi") = c;
-	asm volatile("syscall" : "+r"(rax) : "r"(rdi) : "rcx", "r11", "memory");
-}
-
-static void term_puts(const char *str) {
-	while (*str) {
-		term_putc(*str);
-		str++;
-	}
-}
+#include <reddyos/terminal.h>
 
 int main(int argc, char **argv)
 {
 	(void)argc;
 	(void)argv;
 
-	/* Try terminal output to verify init is running */
-	term_puts("Init started!\n");
+	terminal_write("Init started!\n");
+	terminal_write("Argc: ");
+	terminal_write_u64(argc);
+	terminal_write("\nArgv: ");
+	for (int i = 0; i < argc; i++) {
+		terminal_write(argv[i]);
+		terminal_write(" ");
+	}
+	terminal_write("\n");
 
 	for (;;) {
-		term_putc('.');
 	}
 	return 0;
 }

@@ -61,14 +61,9 @@ set(CMAKE_EXE_LINKER_FLAGS_INIT "
     -T ${CMAKE_SOURCE_DIR}/linker.lds
 ")
 
-# Include directories
-include_directories(
-        ${CMAKE_SOURCE_DIR}/src
-        ${CMAKE_SOURCE_DIR}/headers
-)
-
-# Also add each subdirectory under headers/ so files that do `#include "common.h"`
-# (located in headers/kernel_common/common.h) can be found without changing source.
+# Collect kernel header directories but do NOT add them as global include
+# directories. System programs should not inherit kernel headers. We'll add
+# these include directories only to the kernel target below.
 file(GLOB_RECURSE _HEADER_FILES "${CMAKE_SOURCE_DIR}/headers/*.h")
 set(_HEADER_DIRS)
 foreach(_hf IN LISTS _HEADER_FILES)
@@ -76,9 +71,6 @@ foreach(_hf IN LISTS _HEADER_FILES)
     list(APPEND _HEADER_DIRS ${_dir})
 endforeach()
 list(REMOVE_DUPLICATES _HEADER_DIRS)
-foreach(_d IN LISTS _HEADER_DIRS)
-    include_directories(${_d})
-endforeach()
 
 # Recursively find all source files
 file(GLOB_RECURSE C_SOURCES
@@ -121,6 +113,15 @@ add_executable(reddyos
 foreach(_flag IN LISTS _REDDYOS_C_FLAGS)
     target_compile_options(reddyos PRIVATE $<$<COMPILE_LANGUAGE:C>:${_flag}>)
 endforeach()
+
+# Only add kernel include directories to the kernel target (do NOT add them
+# globally). This prevents subdirectories (like system/) from inheriting kernel
+# headers and ensures system apps use the toolchain/sysroot headers instead.
+target_include_directories(reddyos PRIVATE
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/headers
+        ${_HEADER_DIRS}
+)
 
 # Ensure the linker is invoked in freestanding mode and does not pull in the
 # host C runtime (Scrt1.o / crt objects). We also pass the custom linker
@@ -174,7 +175,7 @@ add_custom_target(initrd_tar ALL DEPENDS "${INITRD_TAR}")
 add_subdirectory(system/)
 
 # Add system programs as dependencies
-add_dependencies(initrd_tar systest init)
+add_dependencies(initrd_tar system)
 
 # Add linker script as a dependency
 set_target_properties(reddyos PROPERTIES
