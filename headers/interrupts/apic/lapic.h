@@ -43,10 +43,17 @@
 // Thread time / tick rate of the timer
 #define LAPIC_TIMER_MS 50
 
+// LAPIC MS
+#define IA32_APIC_BASE_MSR          0x1B
+#define IA32_APIC_ENABLE            (1ULL << 11)
+#define IA32_APIC_BSP               (1ULL << 8)
+#define IA32_APIC_BASE_MASK         0xFFFFFFFFFFFFF000ULL
+
 void lapic_init();
 void lapic_enable(void);
 void lapic_eoi(void);
 bool lapic_is_enabled(void);
 void lapic_timer_start(void);
+bool lapic_get_msr(void);
 
 extern bool lapic_enabled;

@@ -94,6 +94,9 @@ void acpi_init(void)
         panic("APIC not found");
         return;
     }
-    lapic_address = madt->lapic_address;
+    if (!lapic_get_msr()) {
+        // Trust the madt if the MSR does not have the lapic address
+        lapic_address = madt->lapic_address;
+    }
     read_madt(madt);
 }

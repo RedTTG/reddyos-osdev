@@ -105,3 +105,19 @@ void lapic_timer_start(void)
         ticks_in_10ms
     );
 }
+
+bool lapic_get_msr(void)
+{
+    uint64_t msr = rdmsr(IA32_APIC_BASE_MSR);
+
+    // Enable globally if needed
+    if (!(msr & IA32_APIC_ENABLE))
+    {
+        msr |= IA32_APIC_ENABLE;
+        wrmsr(IA32_APIC_BASE_MSR, msr);
+    }
+
+    lapic_address = (uint32_t)(msr & IA32_APIC_BASE_MASK);
+
+    return true;
+}
