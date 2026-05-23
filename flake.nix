@@ -13,21 +13,20 @@
       inherit system;
     };
 
-    cross-embedded = pkgs.pkgsCross.x86_64-embedded;
+    cross = pkgs.pkgsCross.x86_64-embedded;
   in {
     devShells.${system}.default = pkgs.mkShell {
       packages = with pkgs; [
         xorriso
         qemu
         zsh
-        ninja
+        clang
 
         gcc
         glibc.static
-
         # freestanding kernel toolchain
-        cross-embedded.buildPackages.gcc
-        cross-embedded.buildPackages.binutils
+        cross.buildPackages.gcc
+        cross.buildPackages.binutils
       ];
       shellHook = ''
                   exec zsh

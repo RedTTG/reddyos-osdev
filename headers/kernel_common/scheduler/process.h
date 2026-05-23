@@ -4,7 +4,7 @@
 #define USER_CODE_BASE   0x400000
 #define USER_STACK_TOP   0xf0000000
 #define USER_HEAP_BASE   0x80000000
-#define USER_STACK_PAGES 64
+#define USER_STACK_PAGES 16
 
 typedef struct thread thread_t;
 

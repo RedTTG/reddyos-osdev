@@ -84,9 +84,48 @@ int elf_read_info(file_t* file, elf_info_t* info)
     if (read_elf_header(file, &header) < 0)
         return -1;
 
+    /* Determine the in-memory address of the program header table (AT_PHDR).
+     * The ELF header field e_phoff is a file offset. To convert it to a
+     * virtual address we need to find the PT_LOAD segment that contains the
+     * bytes at that file offset and compute:
+     *   phdr_vaddr = segment.vaddr + (e_phoff - segment.offset)
+     * If no containing PT_LOAD is found, fall back to 0.
+     */
+
+    uint64_t phdr_vaddr = 0;
+
+    for (uint16_t i = 0; i < header.phnum; i++) {
+        elf_phdr_t ph;
+
+        file->offset = header.phoff + ((uint64_t)i * header.phentsize);
+        if (read_exact(file, &ph, sizeof(ph)) < 0)
+            return -1;
+
+        if (ph.type != PT_LOAD)
+            continue;
+
+        /* If the program header table (file offset header.phoff) lies within
+         * this PT_LOAD's file-backed region, compute the virtual address.
+         */
+        if (header.phoff >= ph.offset && header.phoff < (ph.offset + ph.filesz)) {
+            phdr_vaddr = ph.vaddr + (header.phoff - ph.offset);
+            break;
+        }
+        /* Also accept the case where the PT_LOAD starts at file offset 0
+         * (common for executables) so phdr is relative to that segment.
+         */
+        if (ph.offset == 0) {
+            phdr_vaddr = ph.vaddr + header.phoff;
+            break;
+        }
+    }
+
     *info = (elf_info_t){
         .entry = header.entry,
-        .base = 0
+        .base = 0,
+        .phdr = phdr_vaddr,
+        .phnum = header.phnum,
+        .phentsize = header.phentsize
     };
 
     return 0;
@@ -94,9 +133,9 @@ int elf_read_info(file_t* file, elf_info_t* info)
 
 int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_info_t* info)
 {
-    terminal_write("Loading ELF into address space: ");
-    terminal_write_hex_u64((uint64_t)as);
-    terminal_write("\n");
+    // terminal_write("Loading ELF into address space: ");
+    // terminal_write_hex_u64((uint64_t)as);
+    // terminal_write("\n");
     elf_header_t header;
 
     if (!as || !file || !info)

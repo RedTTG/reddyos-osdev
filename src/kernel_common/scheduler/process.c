@@ -5,7 +5,7 @@
 static uint64_t next_pid = 1;
 
 
-void setup_process_stack(process_t* p, const char* filename) {
+void setup_process_stack(process_t* p, const char* filename, const elf_info_t* info) {
     paging_load_cr3(p->address_space.cr3);
     u64* stack_top = (void*)p->rsp;
     u64* sp = stack_top;
@@ -36,16 +36,18 @@ void setup_process_stack(process_t* p, const char* filename) {
      * Auxiliary vector
      */
 
-    push_auxv(
-        &sp,
-        AT_PAGESZ,
-        PAGE_SIZE
-    );
+    /*
+     * Because the stack grows downward we must push the auxiliary vector
+     * entries in reverse order so that in memory (increasing addresses)
+     * they appear in order with AT_NULL last.
+     * Push the terminator first, then the entries in reverse.
+     */
+    push_auxv(&sp, AT_NULL, 0);
 
     push_auxv(
         &sp,
-        AT_ENTRY,
-        p->entry_point
+        AT_EXECFN,
+        (uint64_t)prog_name_ptr
     );
 
     push_auxv(
@@ -56,11 +58,36 @@ void setup_process_stack(process_t* p, const char* filename) {
 
     push_auxv(
         &sp,
-        AT_EXECFN,
-        (uint64_t)prog_name_ptr
+        AT_ENTRY,
+        p->entry_point
     );
 
-    push_auxv(&sp, AT_NULL, 0);
+    push_auxv(
+        &sp,
+        AT_PAGESZ,
+        PAGE_SIZE
+    );
+
+    push_auxv(
+        &sp,
+        AT_PHNUM,
+        (uint64_t)info->phnum
+    );
+
+    push_auxv(
+        &sp,
+        AT_PHENT,
+        (uint64_t)info->phentsize
+    );
+
+    /* AT_PHDR: For static binaries, this is typically not loaded into user space.
+     * Set to 0 to indicate headers are not accessible.
+     */
+    push_auxv(
+        &sp,
+        AT_PHDR,
+        (uint64_t)info->phdr
+    );
 
     /*
      * envp[]
@@ -83,9 +110,6 @@ void setup_process_stack(process_t* p, const char* filename) {
 
 
     p->rsp = (uint64_t)sp;
-    terminal_write("Set up process stack, rsp: ");
-    terminal_write_hex_u64(p->rsp);
-    terminal_write("\n");
     paging_load_cr3(paging_kernel_cr3());
 }
 
@@ -122,9 +146,6 @@ process_t* process_create(const char* filename)
         kfree(p);
         return 0;
     }
-    terminal_write("Created address space for process, CR3: ");
-    terminal_write_hex_u64(p->address_space.cr3);
-    terminal_write("\n");
 
     p->entry_point = info.entry;
     p->rsp = USER_STACK_TOP;
@@ -132,11 +153,6 @@ process_t* process_create(const char* filename)
     p->user_stack_bottom_max = p->user_stack_bottom;
     p->main_thread = 0;
     p->pid = next_pid++;
-    terminal_write("Stack top: ");
-    terminal_write_hex_u64(p->rsp);
-    terminal_write(" bottom: ");
-    terminal_write_hex_u64(p->user_stack_bottom);
-    terminal_write("\n");
 
     void* stack_phys_pages[USER_STACK_PAGES] = {0};
 
@@ -158,11 +174,6 @@ process_t* process_create(const char* filename)
         memset(VIRT(stack_phys), 0, PAGE_SIZE);
 
         // Map the stack
-        terminal_write("Map virt (");
-        terminal_write_u64(i);
-        terminal_write("): ");
-        terminal_write_hex_u64(p->user_stack_bottom + (i * PAGE_SIZE));
-        terminal_write("\n");
         vmm_map(
             &p->address_space,
             p->user_stack_bottom + (i * PAGE_SIZE),
@@ -171,9 +182,6 @@ process_t* process_create(const char* filename)
         );
     }
 
-    terminal_write("addr space: ");
-    terminal_write_hex_u64((uint64_t)&p->address_space);
-    terminal_write("\n");
     if (elf_load_into_address_space(&p->address_space, &file, &info) != 0)
     {
         paging_destroy_address_space(&p->address_space);
@@ -184,7 +192,7 @@ process_t* process_create(const char* filename)
     }
 
     // Set up user stack
-    setup_process_stack(p, filename);
+    setup_process_stack(p, filename, &info);
 
     return p;
 }

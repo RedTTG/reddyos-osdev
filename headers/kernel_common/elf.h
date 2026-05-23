@@ -10,6 +10,9 @@ typedef struct file file_t;
 typedef struct elf_info {
     uint64_t entry;
     uint64_t base;
+    uint64_t phdr;     /* program header address in loaded image */
+    uint16_t phnum;    /* number of program headers */
+    uint16_t phentsize; /* size of each program header entry */
 } elf_info_t;
 
 typedef struct __attribute__((packed)) {
