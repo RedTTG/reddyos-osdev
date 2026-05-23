@@ -11,9 +11,7 @@
 // #define PAGE_MASK 0xFFFFFFFFFFFFF000ULL
 #define PAGE_MASK 0x000FFFFFFFFFF000ULL
 
-#define USER_CODE_BASE   0x400000
-#define USER_STACK_TOP   0x70000000
-#define USER_HEAP_BASE   0x80000000
+
 
 #define PML4_INDEX(x) (((x) >> 39) & 0x1FF)
 #define PDPT_INDEX(x) (((x) >> 30) & 0x1FF)

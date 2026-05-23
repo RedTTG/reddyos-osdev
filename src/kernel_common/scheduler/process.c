@@ -83,6 +83,9 @@ void setup_process_stack(process_t* p, const char* filename) {
 
 
     p->rsp = (uint64_t)sp;
+    terminal_write("Set up process stack, rsp: ");
+    terminal_write_hex_u64(p->rsp);
+    terminal_write("\n");
     paging_load_cr3(paging_kernel_cr3());
 }
 
@@ -119,18 +122,25 @@ process_t* process_create(const char* filename)
         kfree(p);
         return 0;
     }
+    terminal_write("Created address space for process, CR3: ");
+    terminal_write_hex_u64(p->address_space.cr3);
+    terminal_write("\n");
 
     p->entry_point = info.entry;
     p->rsp = USER_STACK_TOP;
-    p->user_stack_bottom = USER_STACK_TOP - (8 * PAGE_SIZE);
+    p->user_stack_bottom = USER_STACK_TOP - (USER_STACK_PAGES * PAGE_SIZE);
     p->user_stack_bottom_max = p->user_stack_bottom;
     p->main_thread = 0;
     p->pid = next_pid++;
+    terminal_write("Stack top: ");
+    terminal_write_hex_u64(p->rsp);
+    terminal_write(" bottom: ");
+    terminal_write_hex_u64(p->user_stack_bottom);
+    terminal_write("\n");
 
-    enum { USER_STACK_PAGES = 8 };
     void* stack_phys_pages[USER_STACK_PAGES] = {0};
 
-    for (size_t i = 0; i < USER_STACK_PAGES; i++)
+    for (u64 i = 0; i < USER_STACK_PAGES; i++)
     {
         void* stack_phys = pmm_alloc_page();
 
@@ -148,6 +158,11 @@ process_t* process_create(const char* filename)
         memset(VIRT(stack_phys), 0, PAGE_SIZE);
 
         // Map the stack
+        terminal_write("Map virt (");
+        terminal_write_u64(i);
+        terminal_write("): ");
+        terminal_write_hex_u64(p->user_stack_bottom + (i * PAGE_SIZE));
+        terminal_write("\n");
         vmm_map(
             &p->address_space,
             p->user_stack_bottom + (i * PAGE_SIZE),
@@ -156,6 +171,9 @@ process_t* process_create(const char* filename)
         );
     }
 
+    terminal_write("addr space: ");
+    terminal_write_hex_u64((uint64_t)&p->address_space);
+    terminal_write("\n");
     if (elf_load_into_address_space(&p->address_space, &file, &info) != 0)
     {
         paging_destroy_address_space(&p->address_space);

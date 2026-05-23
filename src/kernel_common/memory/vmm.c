@@ -120,7 +120,7 @@ static uint64_t* get_next(uint64_t* table, const size_t index, const uint64_t fl
 void vmm_map(const address_space_t* address_space, const uint64_t virt, const uint64_t phys, const uint64_t flags)
 {
     // terminal_write("Map page: table addr: ");
-    // terminal_write_hex_u64((uint64_t)pml4);
+    // terminal_write_hex_u64((uint64_t)address_space);
     // terminal_write(", virt: ");
     // terminal_write_hex_u64(virt);
     // terminal_write(", phys: ");
@@ -138,7 +138,23 @@ void vmm_map(const address_space_t* address_space, const uint64_t virt, const ui
     size_t pd_i   = PD_INDEX(virt);
     size_t pt_i   = PT_INDEX(virt);
 
-
+    if ((uint64_t)address_space == 0x000000000056c000) {
+        terminal_write("HMM\n");
+        terminal_write("Map page: table addr: ");
+        terminal_write_hex_u64((uint64_t)address_space);
+        terminal_write(", virt: ");
+        terminal_write_hex_u64(virt);
+        terminal_write(", phys: ");
+        terminal_write_hex_u64(phys);
+        terminal_write(", flags: ");
+        if (flags & PAGE_WRITABLE) terminal_write("WRITABLE ");
+        if (flags & PAGE_USER) terminal_write("USER ");
+        if (flags & PAGE_WTHRU) terminal_write("WTHRU ");
+        if (flags & PAGE_NOCACHE) terminal_write("NOCACHE ");
+        if (flags & PAGE_NX) terminal_write("NX ");
+        terminal_write("\n");
+        return;
+    }
     uint64_t* pdpt = get_next(address_space->pml4, pml4_i, flags);
     uint64_t* pd   = get_next(pdpt, pdpt_i, flags);
     uint64_t* pt   = get_next(pd, pd_i, flags);
@@ -147,6 +163,15 @@ void vmm_map(const address_space_t* address_space, const uint64_t virt, const ui
         (phys & PAGE_MASK) |
         PAGE_PRESENT |
         flags;
+    // terminal_write("Mapped pt: ");
+    // terminal_write_hex_u64((uint64_t)pt);
+    // terminal_write(", index: ");
+    // terminal_write_u64(pt_i);
+    // terminal_write(" value: ");
+    // terminal_write_hex_u64(pt[pt_i]);
+    // terminal_write(" FULL ADDR: ");
+    // terminal_write_hex_u64((uint64_t)pt+pt_i*8);
+    // terminal_write("\n");
 
     invlpg((void*)virt);
 }
@@ -163,6 +188,11 @@ void vmm_unmap(const address_space_t* address_space, const uint64_t virt)
     uint64_t* pt   = phys_to_virt(pd[pd_i] & PAGE_MASK);
 
     pt[pt_i] = 0;
+    // terminal_write("Unmapped pt: ");
+    // terminal_write_hex_u64((uint64_t)pt);
+    // terminal_write(", index: ");
+    // terminal_write_u64(pt_i);
+    // terminal_write("\n");
 
     invlpg((void*)virt);
 }
@@ -187,7 +217,7 @@ address_space_t paging_create_address_space(void)
 
     // 1. allocate new PML4
     as.pml4 = phys_to_virt((uint64_t)pmm_alloc_page());
-    memset(as.pml4, 0, 4096);
+    memset(as.pml4, 0, PAGE_SIZE);
     // 2. copy the shared kernel half (upper 256 entries)
     paging_copy_kernel_half(&as);
 
@@ -256,15 +286,32 @@ uint64_t vmm_virt_to_phys_as(address_space_t* as, uint64_t virt)
     size_t pt_i   = PT_INDEX(virt);
 
     uint64_t* pdpt = phys_to_virt(pml4[pml4_i] & PAGE_MASK);
-    if (!(pml4[pml4_i] & PAGE_PRESENT)) return 0;
+    if (!(pml4[pml4_i] & PAGE_PRESENT)) return -1;
 
     uint64_t* pd = phys_to_virt(pdpt[pdpt_i] & PAGE_MASK);
-    if (!(pdpt[pdpt_i] & PAGE_PRESENT)) return 0;
+    if (!(pdpt[pdpt_i] & PAGE_PRESENT)) return -2;
 
     uint64_t* pt = phys_to_virt(pd[pd_i] & PAGE_MASK);
-    if (!(pd[pd_i] & PAGE_PRESENT)) return 0;
+    if (!(pd[pd_i] & PAGE_PRESENT)) return -3;
 
-    if (!(pt[pt_i] & PAGE_PRESENT)) return 0;
+    if (!(pt[pt_i] & PAGE_PRESENT)) {
+        // terminal_write("Page NOT present at pt: ");
+        // terminal_write_hex_u64((uint64_t)pt);
+        // terminal_write(", index: ");
+        // terminal_write_u64(pt_i);
+        // terminal_write(" value: ");
+        // terminal_write_hex_u64(pt[pt_i]);
+        // terminal_write("\n");
+        return -4;
+    } else {
+        // terminal_write("Page present at pt: ");
+        // terminal_write_hex_u64((uint64_t)pt);
+        // terminal_write(", index: ");
+        // terminal_write_u64(pt_i);
+        // terminal_write(" value: ");
+        // terminal_write_hex_u64(pt[pt_i]);
+        // terminal_write("\n");
+    }
 
     return (pt[pt_i] & PAGE_MASK) | (virt & 0xFFF);
 }
@@ -273,9 +320,7 @@ void* vmm_kernel_ap(address_space_t* as, uint64_t virt)
 {
     uint64_t phys = vmm_virt_to_phys_as(as, virt);
 
-    if (!phys) {
-        return 0;
-    }
+
     // terminal_write("Vmm translate virt: ");
     // terminal_write_hex_u64(virt);
     // terminal_write(" -> phys: ");
@@ -283,6 +328,9 @@ void* vmm_kernel_ap(address_space_t* as, uint64_t virt)
     // terminal_write(" -> virt(kernel): ");
     // terminal_write_hex_u64((uint64_t)phys_to_virt(phys));
     // terminal_write("\n");
+    if (!phys) {
+        return 0;
+    }
 
     return phys_to_virt(phys);
 }

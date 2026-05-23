@@ -24,14 +24,14 @@ static const char* exceptions[] =
 
 void isr_handler(interrupt_frame_t* frame)
 {
-    // if (frame->interrupt_number == 14 && current_thread->process) {
-    //     uint64_t cr2;
-    //     __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
-    //     // TODO: ALLOCATE MORE PAGES TO STACK
-    //     terminal_write("Process stack bottom: ");
-    //     terminal_write_hex_u64(current_thread->process->user_stack_bottom);
-    //     terminal_write("\n");
-    // }
+    if (frame->interrupt_number == 14 && current_thread->process) {
+        uint64_t cr2;
+        __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
+        // TODO: ALLOCATE MORE PAGES TO STACK
+        terminal_write("Process stack bottom: ");
+        terminal_write_hex_u64(current_thread->process->user_stack_bottom);
+        terminal_write("\n");
+    }
     // if (frame->interrupt_number == 13 && current_thread && current_thread->process) {
     //     // Only handle faults that originated from user mode (CPL == 3)
     //     if ((frame->cs & 0x3) == 3) {

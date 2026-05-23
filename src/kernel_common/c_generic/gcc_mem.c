@@ -26,9 +26,9 @@ void *memset(void *s, int c, size_t n) {
     if (bad == 0) {
         panic("BAD MEMSET");
     }
-    terminal_write("MEMSET: ");
-    terminal_write_hex_u64((uint64_t)s);
-    terminal_write("\n");
+    // terminal_write("MEMSET: ");
+    // terminal_write_hex_u64((uint64_t)s);
+    // terminal_write("\n");
 
     for (size_t i = 0; i < n; i++) {
         p[i] = (uint8_t)c;

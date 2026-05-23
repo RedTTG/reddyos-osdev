@@ -94,6 +94,9 @@ int elf_read_info(file_t* file, elf_info_t* info)
 
 int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_info_t* info)
 {
+    terminal_write("Loading ELF into address space: ");
+    terminal_write_hex_u64((uint64_t)as);
+    terminal_write("\n");
     elf_header_t header;
 
     if (!as || !file || !info)
@@ -133,16 +136,26 @@ int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_inf
 
         if (page_count == 0)
             continue;
+        // terminal_write("Page count: ");
+        // terminal_write_u64(page_count);
+        // terminal_write("\n");
 
-        uint64_t phys_pages[page_count];
+        uint64_t *phys_pages = kmalloc(sizeof(uint64_t) * page_count);
 
         for (uint64_t page = 0; page < page_count; page++) {
-            const uint64_t virt = map_start + (page << 12);
             phys_pages[page] = (uint64_t)pmm_alloc_page();
-
+        }
+        for (uint64_t page = 0; page < page_count; page++) {
+            const uint64_t virt = map_start + (page << 12);
             if (!phys_pages[page])
                 goto fail;
-
+            // terminal_write("elf page phys: ");
+            // terminal_write_hex_u64(phys_pages[page]);
+            // terminal_write(" from: ");
+            // terminal_write_hex_u64(virt);
+            // terminal_write(" -> ");
+            // terminal_write_hex_u64(virt + PAGE_SIZE);
+            // terminal_write("\n");
             vmm_map(
                 as,
                 virt,
