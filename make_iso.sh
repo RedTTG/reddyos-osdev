@@ -35,7 +35,7 @@ if [ -z "$HOST_CC" ]; then
     exit 1
 fi
 
-make -C limine-binary clean
+#make -C limine-binary clean
 make -C limine-binary CC="$HOST_CC" LDFLAGS="-static"
 
 # Ensure limine is static so it does not depend on a host dynamic loader.
