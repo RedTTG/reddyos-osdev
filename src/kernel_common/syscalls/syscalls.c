@@ -3,7 +3,7 @@
 #include "syscalls/def.h"
 
 // Per-CPU data for syscall handler (stores user RSP)
-__attribute__((aligned(16))) static percpu_data_t percpu_data = {0};
+__attribute__((aligned(16))) percpu_data_t percpu_data = {0};
 
 #define X(id, fn) [id] = fn,
 syscall_fun_t syscall_table[] = {

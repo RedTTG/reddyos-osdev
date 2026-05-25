@@ -45,10 +45,11 @@ void init_interrupts(void) {
     irq_init();
     irq_install();
 
+    __asm__ volatile("sti");
     acpi_init();
+    terminal_write("ACPI initialized successfully\n");
     lapic_init();
     ioapic_init();
-    __asm__ volatile("sti");
 
     // Interrupts
     ioapic_redirect_irq(0, 32); // PIT

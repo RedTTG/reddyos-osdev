@@ -197,19 +197,19 @@ void vmm_unmap(const address_space_t* address_space, const uint64_t virt)
     invlpg((void*)virt);
 }
 
-uint64_t vmm_virt_to_phys(const address_space_t* address_space, const uint64_t virt)
-{
-    size_t pml4_i = PML4_INDEX(virt);
-    size_t pdpt_i = PDPT_INDEX(virt);
-    size_t pd_i   = PD_INDEX(virt);
-    size_t pt_i   = PT_INDEX(virt);
-
-    uint64_t* pdpt = phys_to_virt(address_space->pml4[pml4_i] & PAGE_MASK);
-    uint64_t* pd   = phys_to_virt(pdpt[pdpt_i] & PAGE_MASK);
-    uint64_t* pt   = phys_to_virt(pd[pd_i] & PAGE_MASK);
-
-    return (pt[pt_i] & PAGE_MASK) | (virt & 0xFFF);
-}
+// uint64_t vmm_virt_to_phys(const address_space_t* address_space, const uint64_t virt)
+// {
+//     size_t pml4_i = PML4_INDEX(virt);
+//     size_t pdpt_i = PDPT_INDEX(virt);
+//     size_t pd_i   = PD_INDEX(virt);
+//     size_t pt_i   = PT_INDEX(virt);
+//
+//     uint64_t* pdpt = phys_to_virt(address_space->pml4[pml4_i] & PAGE_MASK);
+//     uint64_t* pd   = phys_to_virt(pdpt[pdpt_i] & PAGE_MASK);
+//     uint64_t* pt   = phys_to_virt(pd[pd_i] & PAGE_MASK);
+//
+//     return (pt[pt_i] & PAGE_MASK) | (virt & 0xFFF);
+// }
 
 address_space_t paging_create_address_space(void)
 {

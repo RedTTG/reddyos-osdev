@@ -62,7 +62,7 @@ ISR_ERR 30
 ISR_NOERR 31
 
 isr_common:
-    swapgs_if_necessary;
+    ;swapgs_if_necessary;
     push rax
     push rbx
     push rcx
@@ -99,7 +99,7 @@ isr_common:
     pop rax
 
     add rsp, 16
-    swapgs_if_necessary;
+    ;swapgs
     iretq
 
 section .note.GNU-stack noalloc noexec nowrite progbits

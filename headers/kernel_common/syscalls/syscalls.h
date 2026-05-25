@@ -15,6 +15,8 @@ typedef struct {
     u64 user_r11;
 } percpu_data_t;
 
+extern percpu_data_t percpu_data;
+
 typedef struct {
     u64 rax;    // rax | Syscall number / return value
     u64 arg1;   // rdi | Argument 1

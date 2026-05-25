@@ -24,7 +24,7 @@ static const char* exceptions[] =
 
 void isr_handler(interrupt_frame_t* frame)
 {
-    if (frame->interrupt_number == 14 && current_thread->process) {
+    if (frame->interrupt_number == 14 && current_thread && current_thread->process) {
         uint64_t cr2;
         __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
         // TODO: ALLOCATE MORE PAGES TO STACK

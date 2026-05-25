@@ -7,6 +7,13 @@
 __attribute__((used, section(".limine_requests")))
 volatile uint64_t limine_base_revision[] = LIMINE_BASE_REVISION(6);
 
+__attribute__((used, section(".limine_requests")))
+volatile struct limine_stack_size_request stack_size_request = {
+    .id = LIMINE_STACK_SIZE_REQUEST_ID,
+    .revision = 0,
+    .stack_size = 1024 * 1024,
+};
+
 // The Limine requests can be placed anywhere, but it is important that
 // the compiler does not optimise them away, so, usually, they should
 // be made volatile or equivalent, _and_ they should be accessed at least

@@ -1,4 +1,6 @@
 #include "common.h"
+
+__attribute__((__noreturn__))
 void panic(const char* msg)
 {
     terminal_write("\nKERNEL PANIC: ");
@@ -10,6 +12,7 @@ void panic(const char* msg)
         __asm__ volatile("hlt");
 }
 
+__attribute__((__noreturn__))
 void panic_isr(const char* msg, const interrupt_frame_t* frame)
 {
     uint64_t cr2, cr3, gs;
@@ -28,7 +31,12 @@ void panic_isr(const char* msg, const interrupt_frame_t* frame)
     else {
         terminal_write("User CR3");
         thread_t* iter = thread_list;
+
         while (true) {
+            if (!iter) {
+                terminal_write(" (Unknown CR3)");
+                break;
+            }
             if (iter->process && iter->process->address_space.cr3 == cr3) {
                 terminal_write(" (PID: ");
                 terminal_write_u64(iter->process->pid);
@@ -36,10 +44,6 @@ void panic_isr(const char* msg, const interrupt_frame_t* frame)
                 break;
             }
             iter = iter->next;
-            if (!iter) {
-                terminal_write(" (Unknown CR3)");
-                break;
-            }
         }
     }
     terminal_write("\n");
@@ -49,9 +53,12 @@ void panic_isr(const char* msg, const interrupt_frame_t* frame)
     terminal_write("\n");
     terminal_write("GS: ");
     if (gs == 0) terminal_write("0 (User)");
-    else {
+    else if (gs == (uint64_t)&percpu_data) {
         terminal_write_hex_u64(gs);
         terminal_write(" (Kernel)");
+    } else {
+        terminal_write_hex_u64(gs);
+        terminal_write(" (UNKNOWN)");
     }
     terminal_write("\n");
 

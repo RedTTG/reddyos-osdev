@@ -40,7 +40,7 @@ uint64_t virt_to_phys(uint64_t virt);
 
 void vmm_map(const address_space_t* address_space, uint64_t virt, uint64_t phys, uint64_t flags);
 void vmm_unmap(const address_space_t* address_space, uint64_t virt);
-uint64_t vmm_virt_to_phys(const address_space_t* address_space, uint64_t virt);
+uint64_t vmm_virt_to_phys_as(address_space_t* address_space, uint64_t virt);
 
 inline void map_page(uint64_t virt, uint64_t phys, uint64_t flags) {
     vmm_map(&kernel_address_space, virt, phys, flags);
@@ -48,9 +48,9 @@ inline void map_page(uint64_t virt, uint64_t phys, uint64_t flags) {
 void unmap_page(uint64_t virt);
 
 address_space_t paging_create_address_space(void);
-void paging_copy_kernel_half(address_space_t* as);
-void paging_destroy_address_space(address_space_t* as);
+void paging_copy_kernel_half(address_space_t* address_space);
+void paging_destroy_address_space(address_space_t* address_space);
 
-void* vmm_kernel_ap(address_space_t* as, uint64_t virt);
+void* vmm_kernel_ap(address_space_t* address_space, uint64_t virt);
 
 uint64_t vmm_map_page(uint64_t phys, uint64_t flags);
