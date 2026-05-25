@@ -58,7 +58,11 @@ void init_memory(void) {
 }
 
 void init_clocks(void) {
-    // hpet_init();
+    hpet_init();
+
+    if (hpet) {
+        terminal_write("HPET available");
+    }
 }
 
 void init_apics(void) {
@@ -99,6 +103,7 @@ void kmain(void) {
     apic_init();
     init_clocks();
     init_apics();
+    hcf();
 
     // fpu_init();
 

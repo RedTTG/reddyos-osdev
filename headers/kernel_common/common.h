@@ -26,9 +26,11 @@
 #include "framebuffer/fb.h"
 
 // INIT
-
 #include "pit.h"
 #include "fpu.h"
+
+// CLOCKS
+#include "time/clocks/hpet.h"
 
 // INTERRUPTS
 #include "idt.h"
