@@ -2,6 +2,9 @@
 #include <uacpi/uacpi.h>
 #include <uacpi/kernel_api.h>
 
+// UNCOMMENT TO ENABLE LOGS
+// #define UACPII_LOG
+
 typedef struct {
     uacpi_interrupt_handler handler;
     uacpi_handle ctx;
@@ -41,7 +44,7 @@ void *uacpi_kernel_map(uacpi_phys_addr addr, uacpi_size len)
 
     // Map the virtual address using the kernel paging system
     // The kernel has identity mapped all physical memory via VIRT macro
-    u64 phys_addr = vmm_virt_to_phys_as(&kernel_address_space, (uint64_t)memvirt(page_addr)); // Ensure the page is mapped
+    u64 phys_addr = vmm_virt_to_phys_as(&kernel_address_space, (u64)memvirt(page_addr)); // Ensure the page is mapped
     if (!phys_addr || phys_addr != page_addr) {
         if (len > PAGE_SIZE) {
             panic("idk how to map more than one page, fix me later.");
@@ -49,7 +52,7 @@ void *uacpi_kernel_map(uacpi_phys_addr addr, uacpi_size len)
         map_page((u64)page_addr, (u64)page_addr, PAGE_PRESENT | PAGE_WRITABLE | PAGE_NOCACHE);
         return (void*)(page_addr + offset);
     }
-    uint64_t virt = (uint64_t)memvirt(page_addr);
+    uint64_t virt = (u64)memvirt(page_addr);
 
     // Return the virtual address with the original offset
     return (void*)(virt + offset);
@@ -57,10 +60,11 @@ void *uacpi_kernel_map(uacpi_phys_addr addr, uacpi_size len)
 
 void uacpi_kernel_unmap(void *addr, uacpi_size len)
 {
-    // In our kernel, we use VIRT macro for identity mapping,
-    // so unmapping is a no-op for now since ACPI tables are permanent
-    (void)addr;
-    (void)len;
+    u64 phys_addr = vmm_virt_to_phys_as(&kernel_address_space, (u64)addr);
+    if (addr == memvirt(phys_addr)) {
+        return; // HHDM mapped address
+    }
+    unmap_page((u64)addr);
 }
 
 // ============================================================================
@@ -69,6 +73,9 @@ void uacpi_kernel_unmap(void *addr, uacpi_size len)
 
 void uacpi_kernel_log(uacpi_log_level level, const uacpi_char *str)
 {
+#ifndef UACPII_LOG
+    return;
+#endif
     const char *prefix = "";
 
     switch (level) {
