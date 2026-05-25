@@ -34,16 +34,18 @@ void read_madt(madt_t* madt) {
     }
 }
 
-void acpi_init(void)
+void apic_init(void)
 {
     // Initialize uACPI
     uacpi_status ret = uacpi_initialize(0);
     if (uacpi_unlikely_error(ret)) {
         panic("Failed to initialize uACPI");
     }
+}
 
+void apic_load(void) {
     // Load AML namespace
-    ret = uacpi_namespace_load();
+    uacpi_status ret = uacpi_namespace_load();
     if (uacpi_unlikely_error(ret)) {
         panic("Failed to load AML namespace");
     }

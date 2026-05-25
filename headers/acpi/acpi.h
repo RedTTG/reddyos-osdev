@@ -86,4 +86,4 @@ typedef struct madt_entries {
 extern uint32_t lapic_address;
 extern uint32_t ioapic_address;
 
-void acpi_init(void);
+void apic_init(void);

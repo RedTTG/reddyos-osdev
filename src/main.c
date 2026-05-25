@@ -1,3 +1,5 @@
+#include <uacpi/utilities.h>
+
 #include "common.h"
 #include "interrupts/gdt.h"
 
@@ -35,7 +37,7 @@ void load_init(void* arg)
     scheduler_add(user_thread);
 }
 
-void init_interrupts(void) {
+void init_basic_interrupts(void) {
     // Ensure GDT and TSS are installed so the CPU will switch to a safe
     // kernel stack (rsp0) when interrupts occur from user space.
     gdt_install();
@@ -46,14 +48,6 @@ void init_interrupts(void) {
     irq_install();
 
     __asm__ volatile("sti");
-    acpi_init();
-    terminal_write("ACPI initialized successfully\n");
-    lapic_init();
-    ioapic_init();
-
-    // Interrupts
-    ioapic_redirect_irq(0, 32); // PIT
-    ioapic_redirect_irq(1, 33); // Keyboard
 }
 
 void init_memory(void) {
@@ -61,6 +55,14 @@ void init_memory(void) {
     pmm_init();
     vmm_init();
     // terminal_write("Memory initialized!\n");
+}
+
+void init_clocks(void) {
+    // hpet_init();
+}
+
+void init_apics(void) {
+
 }
 
 void init_filesystem(void) {
@@ -93,7 +95,11 @@ void kmain(void) {
 
     // Initialize
     init_memory();
-    init_interrupts();
+    init_basic_interrupts();
+    apic_init();
+    init_clocks();
+    init_apics();
+
     // fpu_init();
 
     irq_register_handler(32, timer_handler);
