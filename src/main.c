@@ -97,7 +97,7 @@ void kmain(void) {
     init_basic_interrupts();
     acpi_init();
     clocks_init();
-    acpi_namespace_init();
+    // acpi_namespace_init();
     init_apic();
     fpu_init();
 

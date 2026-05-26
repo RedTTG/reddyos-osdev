@@ -18,6 +18,11 @@ typedef struct {
 extern percpu_data_t percpu_data;
 
 typedef struct {
+    uint64_t rax, rbx, rcx, rdx, rbp, rdi, rsi,
+             r8, r9, r10, r11, r12, r13, r14, r15;
+} syscall_frame_t;
+
+typedef struct {
     u64 rax;    // rax | Syscall number / return value
     u64 arg1;   // rdi | Argument 1
     u64 arg2;   // rsi | Argument 2
@@ -30,5 +35,5 @@ typedef struct {
 typedef u64 (*syscall_fun_t)(const syscall_args_t* args);
 
 extern void syscall_entry(void);
-extern u64 syscall_handler(syscall_args_t* args);
+u64 syscall_handler(syscall_frame_t* frame);
 void syscall_init(void);

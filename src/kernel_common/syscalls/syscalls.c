@@ -1,5 +1,5 @@
 #include "common.h"
-#include "../../../headers/kernel_common/syscalls/errors.h"
+#include "errors.h"
 #include "syscalls/def.h"
 
 // Per-CPU data for syscall handler (stores user RSP)
@@ -39,20 +39,20 @@ void syscall_init(void)
         (uint64_t)syscall_entry
     );
 
-    // Disable interrupts on entering syscall entry
+    // Disable interrupts and the direction flag on entering syscall entry.
     wrmsr(
         IA32_FMASK,
-        (1 << 9) // IF
+        (1 << 9) | (1 << 10) // IF | DF
     );
 }
 
-u64 syscall_handler(syscall_args_t* args)
+u64 syscall_handler(syscall_frame_t* frame)
 {
     // args->rax contains the syscall number
     // args->rdi, args->rsi, args->rdx, args->r10, args->r8, args->r9 contain the arguments
 
     // terminal_write("syscall number: ");
-    // terminal_write_u64(args->rax);
+    // terminal_write_u64(frame->rax);
     // terminal_write("\n");
     // terminal_write("Current thread ID: ");
     // terminal_write_u64(current_thread ? current_thread->tid : 0);
@@ -63,18 +63,37 @@ u64 syscall_handler(syscall_args_t* args)
     //     terminal_write("\n");
     // }
 
-    if (args->rax >= syscallCount) {
+    if (frame->rax >= syscallCount) {
         goto enosys;
     }
-    syscall_fun_t fun = syscall_table[args->rax];
+    syscall_fun_t fun = syscall_table[frame->rax];
     if (fun == NULL) {
         enosys:
-        terminal_write("Unknown syscall: ");
-        terminal_write_u64(args->rax);
+        terminal_write("\n!====\nUnknown syscall: ");
+        terminal_write_u64(frame->rax);
         terminal_write("\n");
-        args->rax = -ENOSYS;
-        return args->rax;
+        terminal_write("Current thread ID: ");
+        terminal_write_u64(current_thread ? current_thread->tid : 0);
+        terminal_write("\n");
+        if (current_thread && current_thread->process) {
+            terminal_write("Current PID: ");
+            terminal_write_u64(current_thread->process->pid);
+            terminal_write("\n!====\n\n");
+        }
+
+        frame->rax = -ENOSYS;
+        return frame->rax;
     }
-    args->rax = fun(args);
-    return args->rax;
+    syscall_args_t syscall_args[] = {
+        frame->rax,
+        frame->rdi,
+        frame->rsi,
+        frame->rdx,
+        frame->r10,
+        frame->r8,
+        frame->r9,
+    };
+
+    frame->rax = fun(syscall_args);
+    return frame->rax;
 }
