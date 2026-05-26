@@ -57,16 +57,9 @@ void init_memory(void) {
     // terminal_write("Memory initialized!\n");
 }
 
-void init_clocks(void) {
-    hpet_init();
-
-    if (hpet) {
-        terminal_write("HPET available");
-    }
-}
-
 void init_apics(void) {
-
+    acpi_namespace_init();
+    terminal_write("APICs initialized!\n");
 }
 
 void init_filesystem(void) {
@@ -101,7 +94,7 @@ void kmain(void) {
     init_memory();
     init_basic_interrupts();
     apic_init();
-    init_clocks();
+    clocks_init();
     init_apics();
     hcf();
 

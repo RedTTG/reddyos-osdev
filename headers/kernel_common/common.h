@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "types_extra.h"
+#include "helpers_extra.h"
 
 #include "c_generic/string.h"
 
@@ -26,11 +27,10 @@
 #include "framebuffer/fb.h"
 
 // INIT
-#include "pit.h"
 #include "fpu.h"
 
 // CLOCKS
-#include "time/clocks/hpet.h"
+#include "time/clocks.h"
 
 // INTERRUPTS
 #include "idt.h"
@@ -53,6 +53,7 @@
 // C generics
 #include "io.h"
 #include "itoa.h"
+#include "cpuid.h"
 
 // Scheduler
 #include "scheduler/process.h"

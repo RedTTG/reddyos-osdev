@@ -87,3 +87,4 @@ extern uint32_t lapic_address;
 extern uint32_t ioapic_address;
 
 void apic_init(void);
+void acpi_namespace_init(void);

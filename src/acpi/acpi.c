@@ -43,7 +43,7 @@ void apic_init(void)
     }
 }
 
-void apic_load(void) {
+void acpi_namespace_init(void) {
     // Load AML namespace
     uacpi_status ret = uacpi_namespace_load();
     if (uacpi_unlikely_error(ret)) {

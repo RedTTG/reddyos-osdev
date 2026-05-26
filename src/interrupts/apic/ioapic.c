@@ -6,7 +6,7 @@ static void ioapic_map() {
     map_page(
         (uint64_t)memvirt(ioapic_address),
         ioapic_address,
-        PAGE_PRESENT | PAGE_WRITABLE | PAGE_NOCACHE
+        PAGE_MMIO
     );
 }
 

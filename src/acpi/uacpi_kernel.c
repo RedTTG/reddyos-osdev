@@ -3,7 +3,7 @@
 #include <uacpi/kernel_api.h>
 
 // UNCOMMENT TO ENABLE LOGS
-// #define UACPII_LOG
+#define UACPII_LOG
 
 typedef struct {
     uacpi_interrupt_handler handler;
@@ -49,7 +49,7 @@ void *uacpi_kernel_map(uacpi_phys_addr addr, uacpi_size len)
         if (len > PAGE_SIZE) {
             panic("idk how to map more than one page, fix me later.");
         }
-        map_page((u64)page_addr, (u64)page_addr, PAGE_PRESENT | PAGE_WRITABLE | PAGE_NOCACHE);
+        map_page((u64)page_addr, (u64)page_addr, PAGE_MMIO);
         return (void*)(page_addr + offset);
     }
     uint64_t virt = (u64)memvirt(page_addr);
@@ -244,7 +244,6 @@ uacpi_status uacpi_kernel_pci_write32(
 uacpi_status uacpi_kernel_io_map(
     uacpi_io_addr base, uacpi_size len, uacpi_handle *out_handle)
 {
-    // TODO: Check if mmio is needed
     // IO ports don't need mapping, just return the base address as the handle
     (void)len;
     *out_handle = (uacpi_handle)(uintptr_t)base;
@@ -268,9 +267,7 @@ uacpi_status uacpi_kernel_io_read16(
     uacpi_handle handle, uacpi_size offset, uacpi_u16 *out_value)
 {
     uacpi_io_addr base = (uacpi_io_addr)(uintptr_t)handle;
-    uint16_t val;
-    __asm__ volatile("inw %w1, %0" : "=a"(val) : "Nd"(base + offset));
-    *out_value = val;
+    *out_value = inw(base + offset);
     return UACPI_STATUS_OK;
 }
 
@@ -278,9 +275,7 @@ uacpi_status uacpi_kernel_io_read32(
     uacpi_handle handle, uacpi_size offset, uacpi_u32 *out_value)
 {
     uacpi_io_addr base = (uacpi_io_addr)(uintptr_t)handle;
-    uint32_t val;
-    __asm__ volatile("inl %w1, %0" : "=a"(val) : "Nd"(base + offset));
-    *out_value = val;
+    *out_value = inl(base + offset);
     return UACPI_STATUS_OK;
 }
 
@@ -296,7 +291,7 @@ uacpi_status uacpi_kernel_io_write16(
     uacpi_handle handle, uacpi_size offset, uacpi_u16 in_value)
 {
     uacpi_io_addr base = (uacpi_io_addr)(uintptr_t)handle;
-    __asm__ volatile("outw %0, %w1" : : "a"(in_value), "Nd"(base + offset));
+    outw(base + offset, in_value);
     return UACPI_STATUS_OK;
 }
 
@@ -304,7 +299,7 @@ uacpi_status uacpi_kernel_io_write32(
     uacpi_handle handle, uacpi_size offset, uacpi_u32 in_value)
 {
     uacpi_io_addr base = (uacpi_io_addr)(uintptr_t)handle;
-    __asm__ volatile("outl %0, %w1" : : "a"(in_value), "Nd"(base + offset));
+    outl(base + offset, in_value);
     return UACPI_STATUS_OK;
 }
 
@@ -341,26 +336,19 @@ void uacpi_kernel_free(void *mem, uacpi_size size_hint)
 // Time Functions
 // ============================================================================
 
-// Simple monotonic counter (will be improved with proper timing)
-static volatile uint64_t nanoseconds_since_boot = 0;
-
 uacpi_u64 uacpi_kernel_get_nanoseconds_since_boot(void)
 {
-    return nanoseconds_since_boot;
+    return ns_since_boot();
 }
 
 void uacpi_kernel_stall(uacpi_u8 usec)
 {
-    // Use PIT for microsecond-precision stall
-    pit_prepare_sleep(usec);
-    pit_perform_sleep();
+    busy_sleep_best_ns(usec * 1000ULL);
 }
 
 void uacpi_kernel_sleep(uacpi_u64 msec)
 {
-    // Sleep for milliseconds - convert to microseconds
-    pit_prepare_sleep((uint32_t)(msec * 1000));
-    pit_perform_sleep();
+    busy_sleep_best_ns(msec * 1000000ULL);
 }
 
 // ============================================================================
@@ -569,10 +557,6 @@ uacpi_status uacpi_kernel_install_interrupt_handler(
 
     uacpi_wrappers[irq] = w;
 
-    // IMPORTANT: connect to your IRQ system
-    terminal_write("[UACPI] Installing interrupt handler for IRQ ");
-    terminal_write_u64(irq);
-    terminal_write("\n");
     pic_unmask_irq(irq);
     irq_register_handler(32 + irq, (irq_handler_t)handler);
 

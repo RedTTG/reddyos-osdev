@@ -17,7 +17,7 @@ static void lapic_map() {
     map_page(
         (uint64_t)memvirt(lapic_address),
         lapic_address,
-        PAGE_PRESENT | PAGE_WRITABLE | PAGE_NOCACHE
+        PAGE_MMIO
     );
 }
 
@@ -66,7 +66,8 @@ void lapic_timer_start(void)
     );
 
     // PIT calibration sleep (10ms)
-    pit_prepare_sleep(LAPIC_TIMER_MS * 1000);
+    // TODO: remove PIT
+    // pit_prepare_sleep(LAPIC_TIMER_MS * 1000);
 
     // Start LAPIC countdown from max
     lapic_write(
@@ -75,7 +76,7 @@ void lapic_timer_start(void)
     );
 
     // Wait 10ms
-    pit_perform_sleep();
+    // pit_perform_sleep();
 
     // Stop timer
     lapic_write(
