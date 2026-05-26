@@ -27,6 +27,7 @@ void panic_isr(const char* msg, const interrupt_frame_t* frame)
     terminal_write("CR3: ");
     terminal_write_hex_u64(cr3);
     terminal_write(" - ");
+    address_space_t* as = &kernel_address_space;
     if (cr3 == paging_kernel_cr3()) terminal_write("Kernel CR3");
     else {
         terminal_write("User CR3");
@@ -38,6 +39,7 @@ void panic_isr(const char* msg, const interrupt_frame_t* frame)
                 break;
             }
             if (iter->process && iter->process->address_space.cr3 == cr3) {
+                as = &iter->process->address_space;
                 terminal_write(" (PID: ");
                 terminal_write_u64(iter->process->pid);
                 terminal_write(")");
@@ -47,9 +49,10 @@ void panic_isr(const char* msg, const interrupt_frame_t* frame)
         }
     }
     terminal_write("\n");
-
-    terminal_write("CR2: ");
-    terminal_write_hex_u64(cr2);
+    if (frame->interrupt_number == 14) {
+        terminal_write("CR2: ");
+        terminal_write_hex_u64(cr2);
+    }
     terminal_write("\n");
     terminal_write("GS: ");
     if (gs == 0) terminal_write("0 (User)");
@@ -65,35 +68,38 @@ void panic_isr(const char* msg, const interrupt_frame_t* frame)
     terminal_write("ERR: ");
     terminal_write_hex_u64(frame->error_code);
     terminal_write("\n");
-    terminal_write("PAGE INFO: ");
-    /* Present / Not present */
-    if (frame->error_code & 0x1)
-        terminal_write("Protection Violation | ");
-    else
-        terminal_write("Page Not Present | ");
+    if (frame->interrupt_number == 14) {
+        terminal_write("PAGE INFO: ");
+        /* Present / Not present */
+        if (frame->error_code & 0x1)
+            terminal_write("Protection Violation | ");
+        else
+            terminal_write("Page Not Present | ");
 
-    /* Read / Write */
-    if (frame->error_code & 0x2)
-        terminal_write("Write | ");
-    else
-        terminal_write("Read | ");
+        /* Read / Write */
+        if (frame->error_code & 0x2)
+            terminal_write("Write | ");
+        else
+            terminal_write("Read | ");
 
-    /* User / Kernel */
-    if (frame->error_code & 0x4)
-        terminal_write("User Mode | ");
-    else
-        terminal_write("Kernel Mode | ");
+        /* User / Kernel */
+        if (frame->error_code & 0x4)
+            terminal_write("User Mode | ");
+        else
+            terminal_write("Kernel Mode | ");
 
-    /* Reserved bit violation */
-    if (frame->error_code & 0x8)
-        terminal_write("RSVD Violation | ");
-    else
-        terminal_write("No RSVD Issue | ");
-    /* Instruction fetch vs data access */
-    if (frame->error_code & 0x10)
-        terminal_write("Instruction Fetch (NX violation)\n");
-    else
-        terminal_write("Data Access\n");
+        /* Reserved bit violation */
+        if (frame->error_code & 0x8)
+            terminal_write("RSVD Violation | ");
+        else
+            terminal_write("No RSVD Issue | ");
+        /* Instruction fetch vs data access */
+        if (frame->error_code & 0x10)
+            terminal_write("Instruction Fetch (NX violation)\n");
+        else
+            terminal_write("Data Access\n");
+        tables_debug(as->pml4, cr2);
+    }
 
     terminal_write("RIP: ");
     terminal_write_hex_u64(frame->rip);

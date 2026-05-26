@@ -4,7 +4,7 @@
 #define USER_CODE_BASE   0x400000
 #define USER_STACK_TOP   0xf0000000
 #define USER_HEAP_BASE   0x80000000
-#define USER_STACK_PAGES 16
+#define USER_STACK_PAGES 32
 
 typedef struct thread thread_t;
 
@@ -25,3 +25,4 @@ typedef struct __attribute__((aligned(16))) process {
 } process_t;
 
 process_t* process_create(const char* filename);
+bool grow_user_stack(process_t* p);

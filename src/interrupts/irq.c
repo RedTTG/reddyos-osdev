@@ -68,9 +68,9 @@ void irq_dispatch(interrupt_frame_t* frame) {
     const uint8_t vector = frame->interrupt_number;
 
     if (handlers[vector]) {
-        terminal_write("Handling IRQ: ");
-        terminal_write_u64(vector);
-        terminal_write("\n");
+        // terminal_write("Handling IRQ: ");
+        // terminal_write_u64(vector);
+        // terminal_write("\n");
         handlers[vector](frame);
     }
     else {

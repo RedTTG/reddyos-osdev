@@ -139,8 +139,10 @@ ssize_t vfs_read(
     file_t *file,
     void *buffer,
     uint64_t size
-)
-{
+) {
+    if (unlikely(!file || !buffer)) {
+        return -1;
+    }
     int read = file->vnode->ops->read(
         file->vnode,
         file->offset,

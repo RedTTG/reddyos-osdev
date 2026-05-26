@@ -138,23 +138,6 @@ void vmm_map(const address_space_t* address_space, const uint64_t virt, const ui
     size_t pd_i   = PD_INDEX(virt);
     size_t pt_i   = PT_INDEX(virt);
 
-    if ((uint64_t)address_space == 0x000000000056c000) {
-        terminal_write("HMM\n");
-        terminal_write("Map page: table addr: ");
-        terminal_write_hex_u64((uint64_t)address_space);
-        terminal_write(", virt: ");
-        terminal_write_hex_u64(virt);
-        terminal_write(", phys: ");
-        terminal_write_hex_u64(phys);
-        terminal_write(", flags: ");
-        if (flags & PAGE_WRITABLE) terminal_write("WRITABLE ");
-        if (flags & PAGE_USER) terminal_write("USER ");
-        if (flags & PAGE_WTHRU) terminal_write("WTHRU ");
-        if (flags & PAGE_NOCACHE) terminal_write("NOCACHE ");
-        if (flags & PAGE_NX) terminal_write("NX ");
-        terminal_write("\n");
-        return;
-    }
     uint64_t* pdpt = get_next(address_space->pml4, pml4_i, flags);
     uint64_t* pd   = get_next(pdpt, pdpt_i, flags);
     uint64_t* pt   = get_next(pd, pd_i, flags);
@@ -163,15 +146,6 @@ void vmm_map(const address_space_t* address_space, const uint64_t virt, const ui
         (phys & PAGE_MASK) |
         PAGE_PRESENT |
         flags;
-    // terminal_write("Mapped pt: ");
-    // terminal_write_hex_u64((uint64_t)pt);
-    // terminal_write(", index: ");
-    // terminal_write_u64(pt_i);
-    // terminal_write(" value: ");
-    // terminal_write_hex_u64(pt[pt_i]);
-    // terminal_write(" FULL ADDR: ");
-    // terminal_write_hex_u64((uint64_t)pt+pt_i*8);
-    // terminal_write("\n");
 
     invlpg((void*)virt);
 }
@@ -339,4 +313,37 @@ uint64_t vmm_map_page(const uint64_t phys, uint64_t flags)
 {
     (void)flags;
     return phys; // placeholder for future per-process allocator
+}
+
+u64* print_table_perms(u64* table, u64 idx) {
+    if (!table) {
+        terminal_write("-\n");
+        return NULL;
+    }
+    terminal_write_hex_u64(memphys((u64)table));
+    terminal_write("[");
+    terminal_write_u64(idx);
+    terminal_write("] ");
+    if (table[idx] & PAGE_PRESENT) terminal_write("PRESENT ");
+    else {
+        terminal_write("NOT PRESENT ");
+        terminal_write_hex_u64(table[idx]);
+    }
+    terminal_write("\n");
+    if (table[idx] & PAGE_PRESENT) {
+        return phys_to_virt(table[idx] & PAGE_MASK);
+    } else {
+        return NULL;
+    }
+}
+
+void tables_debug(u64* pml4, u64 virt) {
+    terminal_write("PML4: ");
+    u64* pdpt = print_table_perms(pml4, PML4_INDEX(virt));
+    terminal_write("PDPT: ");
+    u64* pd = print_table_perms(pdpt, PDPT_INDEX(virt));
+    terminal_write("PD:   ");
+    u64* pt = print_table_perms(pd, PD_INDEX(virt));
+    terminal_write("PT:   ");
+    print_table_perms(pt, PT_INDEX(virt));
 }

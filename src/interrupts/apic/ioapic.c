@@ -1,6 +1,6 @@
 #include "common.h"
 
-volatile uint32_t* ioapic;
+static uint32_t* ioapic;
 
 static void ioapic_map() {
     map_page(
@@ -12,8 +12,13 @@ static void ioapic_map() {
 
 void ioapic_init()
 {
+    get_ioapic_address();
+    if (!ioapic_address) {
+        panic("Could not get IOAPIC address");
+        return;
+    }
     ioapic_map();
-    ioapic = (volatile uint32_t*)memvirt(ioapic_address);
+    ioapic = (uint32_t*)memvirt(ioapic_address);
 }
 
 static void ioapic_write(uint8_t reg, uint32_t value)

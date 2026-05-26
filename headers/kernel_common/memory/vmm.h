@@ -56,3 +56,7 @@ void paging_destroy_address_space(address_space_t* address_space);
 void* vmm_kernel_ap(address_space_t* address_space, uint64_t virt);
 
 uint64_t vmm_map_page(uint64_t phys, uint64_t flags);
+
+// FOR DEBUG
+u64* print_table_perms(u64* table, u64 idx);
+void tables_debug(u64* pml4, u64 virt);

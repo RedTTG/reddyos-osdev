@@ -1,6 +1,6 @@
 #include "common.h"
 
-volatile uint32_t* lapic;
+static uint32_t* lapic;
 bool lapic_enabled = false;
 
 static void lapic_write(uint32_t reg, uint32_t val)
@@ -13,6 +13,8 @@ static uint32_t lapic_read(uint32_t reg)
     return lapic[reg / 4];
 }
 
+
+
 static void lapic_map() {
     map_page(
         (uint64_t)memvirt(lapic_address),
@@ -23,8 +25,13 @@ static void lapic_map() {
 
 void lapic_init()
 {
+    get_lapic_address();
+    if (!lapic_address) {
+        panic("Could not get LAPIC address");
+        return;
+    }
     lapic_map();
-    lapic = (volatile uint32_t*)memvirt(lapic_address);
+    lapic = (uint32_t*)memvirt(lapic_address);
     lapic_enable();
     lapic_write(LAPIC_TPR, 0);
 }
@@ -65,18 +72,14 @@ void lapic_timer_start(void)
         LAPIC_DIVIDE_BY_16
     );
 
-    // PIT calibration sleep (10ms)
-    // TODO: remove PIT
-    // pit_prepare_sleep(LAPIC_TIMER_MS * 1000);
-
     // Start LAPIC countdown from max
     lapic_write(
         LAPIC_TIMER_INITCNT,
         0xFFFFFFFF
     );
 
-    // Wait 10ms
-    // pit_perform_sleep();
+    // PIT calibration sleep (10ms)
+    busy_sleep_best_ns(LAPIC_TIMER_MS * 1000000ULL);
 
     // Stop timer
     lapic_write(

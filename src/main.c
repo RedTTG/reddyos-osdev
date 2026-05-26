@@ -57,11 +57,6 @@ void init_memory(void) {
     // terminal_write("Memory initialized!\n");
 }
 
-void init_apics(void) {
-    acpi_namespace_init();
-    terminal_write("APICs initialized!\n");
-}
-
 void init_filesystem(void) {
     tarsf_limine_init();
     fd_init();
@@ -71,6 +66,13 @@ void init_filesystem(void) {
     if (mount_fs("/dev", devfs_root()) != 0) {
         terminal_write("Warning: failed to mount /dev\n");
     }
+}
+
+void init_apic(void) {
+    lapic_init();
+    ioapic_init();
+    ioapic_redirect_irq(0, 32); // PIT
+    ioapic_redirect_irq(1, 33); // Keyboard
 }
 
 void register_devices(void) {
@@ -93,12 +95,11 @@ void kmain(void) {
     // Initialize
     init_memory();
     init_basic_interrupts();
-    apic_init();
+    acpi_init();
     clocks_init();
-    init_apics();
-    hcf();
-
-    // fpu_init();
+    acpi_namespace_init();
+    init_apic();
+    fpu_init();
 
     irq_register_handler(32, timer_handler);
 

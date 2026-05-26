@@ -11,6 +11,8 @@
 
 static int read_exact(file_t* file, void* buffer, uint64_t size)
 {
+    if (unlikely(!file || !buffer))
+        return -1;
     uint8_t* out = buffer;
 
     while (size > 0) {
@@ -183,6 +185,12 @@ int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_inf
 
         for (uint64_t page = 0; page < page_count; page++) {
             phys_pages[page] = (uint64_t)pmm_alloc_page();
+            if (unlikely(!phys_pages[page])) {
+                for (uint64_t j = 0; j < page; j++)
+                    pmm_free_page((void*)phys_pages[j]);
+                kfree(phys_pages);
+                goto fail;
+            }
         }
         for (uint64_t page = 0; page < page_count; page++) {
             const uint64_t virt = map_start + (page << 12);
@@ -204,14 +212,32 @@ int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_inf
         }
 
         // DEBUG: fill with 1s
-        //memset((void*)map_start, 0xFF, map_end - map_start);
+        // paging_load_cr3(as->cr3);
+        // memset((void*)map_start+1, 0xFF, map_end - map_start);
+        // paging_load_cr3(paging_kernel_cr3());
 
         file->offset = ph.offset;
-        if (read_exact(file, vmm_kernel_ap(as, ph.vaddr), ph.filesz) < 0)
-            goto fail;
+        u64 offset = 0;
+        while (offset < ph.filesz) {
+            u64 to_read = ph.filesz - offset;
+            if (to_read > PAGE_SIZE)
+                to_read = PAGE_SIZE;
+            if (read_exact(file, vmm_kernel_ap(as, ph.vaddr + offset), to_read) < 0)
+                goto fail;
+            offset += to_read;
+        }
 
-        if (ph.memsz > ph.filesz)
-            memset(vmm_kernel_ap(as, ph.vaddr + ph.filesz), 0, ph.memsz - ph.filesz);
+        if (ph.memsz > ph.filesz) {
+            offset = 0;
+            u64 extra = ph.memsz - ph.filesz;
+            while (offset < extra) {
+                u64 to_null = extra - offset;
+                if (to_null > PAGE_SIZE)
+                    to_null = PAGE_SIZE;
+                memset(vmm_kernel_ap(as, ph.vaddr + ph.filesz), 0, to_null);
+                offset += to_null;
+            }
+        }
     }
 
     return 0;

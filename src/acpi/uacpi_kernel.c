@@ -3,7 +3,7 @@
 #include <uacpi/kernel_api.h>
 
 // UNCOMMENT TO ENABLE LOGS
-#define UACPII_LOG
+// #define UACPII_LOG
 
 typedef struct {
     uacpi_interrupt_handler handler;
@@ -22,7 +22,7 @@ uacpi_status uacpi_kernel_get_rsdp(uacpi_phys_addr *out_rsdp_address)
     if (!rsdp_request.response)
         return UACPI_STATUS_NOT_FOUND;
 
-    rsdp_t* rsdp = (rsdp_t*)memphys((uint64_t)rsdp_request.response->address);
+    void* rsdp = (void*)memphys((uint64_t)rsdp_request.response->address);
 
     if (!rsdp) {
         return UACPI_STATUS_NOT_FOUND;

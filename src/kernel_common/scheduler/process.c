@@ -93,6 +93,27 @@ void setup_process_stack(process_t* p, const char* filename, const elf_info_t* i
     paging_load_cr3(paging_kernel_cr3());
 }
 
+bool grow_user_stack(process_t* p) {
+    if (p->user_stack_bottom - PAGE_SIZE < p->user_stack_bottom_max) {
+        terminal_write("User stack limit reached for process ");
+        terminal_write_u64(p->pid);
+        terminal_write("\n");
+        return false;
+    }
+    terminal_write("Growing user stack for process ");
+    terminal_write_u64(p->pid);
+    terminal_write("\n");
+    void* phys_addr = pmm_alloc_page();
+    vmm_map(
+        &p->address_space,
+        p->user_stack_bottom - PAGE_SIZE,
+        (uint64_t)phys_addr,
+        PAGE_USER | PAGE_WRITABLE | PAGE_PRESENT
+    );
+    p->user_stack_bottom -= PAGE_SIZE;
+    return true;
+}
+
 process_t* process_create(const char* filename)
 {
     file_t file = {0};
@@ -130,7 +151,7 @@ process_t* process_create(const char* filename)
     p->entry_point = info.entry;
     p->rsp = USER_STACK_TOP;
     p->user_stack_bottom = USER_STACK_TOP - (USER_STACK_PAGES * PAGE_SIZE);
-    p->user_stack_bottom_max = p->user_stack_bottom;
+    p->user_stack_bottom_max = p->user_stack_bottom - (PAGE_SIZE * 128); // Allow up to 128 pages for stack growth
     p->main_thread = 0;
     p->pid = next_pid++;
 

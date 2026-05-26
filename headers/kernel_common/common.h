@@ -39,6 +39,7 @@
 #include "panic.h"
 
 // APIC
+#include "apic/madt.h"
 #include "apic/ioapic.h"
 #include "apic/lapic.h"
 
