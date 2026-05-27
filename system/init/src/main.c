@@ -21,11 +21,6 @@ int main(int argc, char **argv)
 
 	fb_info_t* info = malloc(sizeof(fb_info_t));
 
-	if (ioctl(fd, FB_IOCTL_GET_INFO, info) < 0) {
-		perror("ioctl");
-		return 1;
-	}
-
 	terminal_write("Framebuffer info:\n");
 	terminal_write("Width: ");
 	terminal_write_u64(info->width);
