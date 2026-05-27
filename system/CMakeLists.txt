@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 find_program(REDDYOS_C_COMPILER
         NAMES x86_64-reddyos-gcc
         PATHS ${CMAKE_SOURCE_DIR}/toolchain/dist/usr/bin
+        PATHS ${CMAKE_SOURCE_DIR}/toolchain/sysroot/usr/include
         PATHS ${CMAKE_SOURCE_DIR}/toolchain/sysroot/usr/lib
         PATHS ${CMAKE_SOURCE_DIR}/toolchain/dist/usr/lib/gcc/x86_64-reddyos/16.1.0
         REQUIRED

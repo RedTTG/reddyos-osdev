@@ -1,6 +1,5 @@
 #include <reddyos/terminal.h>
 #include <reddyos/fb.h>
-#include <sys/ioctl.h>
 #include <stdlib.h>
 #include "stdio.h"
 
