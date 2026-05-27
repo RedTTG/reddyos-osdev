@@ -1,7 +1,6 @@
 #include "common.h"
 #include "syscalls/fs/fs.h"
-
-#include "../../../../headers/kernel_common/syscalls/errors.h"
+#include "abi-bits/errno.h"
 
 u64 do_sys_open(const char* path, int flags, int mode) {
     return process_fd_open(current_thread->process, path, flags, mode);

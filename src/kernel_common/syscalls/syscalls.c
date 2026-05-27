@@ -1,5 +1,5 @@
 #include "common.h"
-#include "errors.h"
+#include "abi-bits/errno.h"
 #include "syscalls/def.h"
 
 // Per-CPU data for syscall handler (stores user RSP)

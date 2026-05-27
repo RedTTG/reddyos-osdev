@@ -81,6 +81,7 @@ foreach(_hf IN LISTS _HEADER_FILES)
     get_filename_component(_dir ${_hf} PATH)
     list(APPEND _HEADER_DIRS ${_dir})
 endforeach()
+list(APPEND _HEADER_DIRS "${CMAKE_SOURCE_DIR}/toolchain/reddyos-sysdeps/include/abi-bits")
 list(REMOVE_DUPLICATES _HEADER_DIRS)
 
 # Recursively find all source files
