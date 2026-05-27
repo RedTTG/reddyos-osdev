@@ -40,7 +40,7 @@ u64 do_sys_ioctl(uint fd, uint64_t cmd, uint64_t arg) {
     return vfs_ioctl(file, cmd, arg);
 }
 
-uint64_t do_sys_stat(const char *filename, stat_t *buffer) {
+uint64_t do_sys_stat(const char *filename, struct stat *buffer) {
     vnode_t* node = vfs_find_vnode(filename);
     if (!node)
         return -ENOENT;
@@ -48,7 +48,7 @@ uint64_t do_sys_stat(const char *filename, stat_t *buffer) {
     return vfs_stat(node, buffer);
 }
 
-u64 do_sys_fstat(uint fd, stat_t* buffer) {
+u64 do_sys_fstat(uint fd, struct stat* buffer) {
     file_t* file = process_unpack_fd(current_thread->process, fd);
     if (!file)
         return -EBADF;

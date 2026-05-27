@@ -186,7 +186,7 @@ int vfs_ioctl(file_t *file, uint64_t cmd, uint64_t arg)
     return file->vnode->ops->ioctl(file->vnode, cmd, arg);
 }
 
-int vfs_stat(vnode_t *node, stat_t *buffer) {
+int vfs_stat(vnode_t *node, struct stat *buffer) {
     if (!node || !buffer)
         return -1;
 
@@ -197,9 +197,9 @@ int vfs_stat(vnode_t *node, stat_t *buffer) {
     buffer->st_uid = 0;
     buffer->st_gid = 0;
     buffer->st_blksize = 512;
-    buffer->st_ctime = 0;
-    buffer->st_mtime = 0;
-    buffer->st_atime = 0;
+    buffer->st_ctim = TIME_ZERO;
+    buffer->st_mtim = TIME_ZERO;
+    buffer->st_atim = TIME_ZERO;
 
     const int is_dir = (node->ops == NULL && node->internal != NULL);
     const int is_chr = (node->ops != NULL && node->ops->ioctl != NULL);

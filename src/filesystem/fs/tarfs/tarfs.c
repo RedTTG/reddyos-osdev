@@ -31,11 +31,11 @@ static int tar_read(
     return (int)size;
 }
 
-static int tar_stat(vnode_t *vnode, stat_t *buffer) {
+static int tar_stat(vnode_t *vnode, struct stat *buffer) {
     if (!vnode || !buffer)
         return -1;
 
-    memset(buffer, 0, sizeof(stat_t));
+    memset(buffer, 0, sizeof(struct stat));
 
     buffer->st_mode = S_IFREG | S_IRUSR | S_IRGRP | S_IROTH;
     buffer->st_size = vnode->size;
