@@ -195,5 +195,9 @@ process_t* process_create(const char* filename)
     // Set up user stack
     setup_process_stack(p, filename, &info);
 
+    // Set up VMA
+    p->vma_tree.value_of_node = vma_tree_get_value;
+    p->vma_tree.type = BST_TYPE_RB;
+
     return p;
 }

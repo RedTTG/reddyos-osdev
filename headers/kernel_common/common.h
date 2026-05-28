@@ -47,6 +47,7 @@
 #include "limine_requests.h"
 #include "memory/pmm.h"
 #include "memory/vmm.h"
+#include "memory/vma.h"
 #include "memory/heap.h"
 #include "terminal.h"
 #include "elf.h"
