@@ -7,3 +7,6 @@
 [submodule "toolchain/binutils"]
 	path = toolchain/binutils
 	url = https://github.com/RedTTG/binutils-gdb-reddyos.git
+[submodule "external/ftrees"]
+	path = external/ftrees
+	url = https://github.com/RedTTG/ftrees-reddyos.git

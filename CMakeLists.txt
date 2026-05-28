@@ -11,6 +11,11 @@ FetchContent_MakeAvailable(uacpi)
 
 include(${uacpi_SOURCE_DIR}/uacpi.cmake)
 
+# Setup Evalyn's ftree library sources (Check external/ftrees/LICENSE for license details)
+file(GLOB_RECURSE FTREES_SOURCES
+        ${CMAKE_SOURCE_DIR}/external/ftrees/*.c
+)
+
 project(reddyos C ASM_NASM)
 
 set(CMAKE_C_STANDARD 11)
@@ -82,7 +87,9 @@ foreach(_hf IN LISTS _HEADER_FILES)
     list(APPEND _HEADER_DIRS ${_dir})
 endforeach()
 list(APPEND _HEADER_DIRS "${CMAKE_SOURCE_DIR}/toolchain/reddyos-sysdeps/include/abi-bits")
+list(APPEND _HEADER_DIRS "${CMAKE_SOURCE_DIR}/external/ftrees/")
 list(REMOVE_DUPLICATES _HEADER_DIRS)
+
 
 # Recursively find all source files
 file(GLOB_RECURSE C_SOURCES
@@ -117,6 +124,7 @@ set_source_files_properties(${ASM_GAS_SOURCES}
 add_executable(reddyos
         ${C_SOURCES}
         ${UACPI_SOURCES}
+        ${FTREES_SOURCES}
         ${ASM_NASM_SOURCES}
         ${ASM_GAS_SOURCES}
 )
@@ -132,6 +140,7 @@ endforeach()
 # headers and ensures system apps use the toolchain/sysroot headers instead.
 target_include_directories(reddyos PRIVATE
         ${UACPI_INCLUDES}
+        ${FTREES_INCLUDES}
         ${CMAKE_SOURCE_DIR}/headers
         ${_HEADER_DIRS}
 )
