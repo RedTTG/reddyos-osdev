@@ -8,6 +8,7 @@ typedef enum {
 } vma_type_t;
 
 typedef struct vm_area {
+    bstree_node_t node;
     u64 start;
     u64 end;
 
@@ -26,16 +27,9 @@ typedef struct vm_area {
             u64 anon_id;
         };
     };
-
-    struct vm_area* next;
 } vm_area_t;
 
-typedef struct vm_area_node {
-    bstree_node_t node;
-    vm_area_t area;
-} vm_area_node_t;
-
-static uint64_t vma_tree_get_value(bstree_node_t* node) {
-    vm_area_node_t* n = CONTAINER_OF(node, vm_area_node_t, node);
-    return n->area.start;
+static inline uint64_t vma_tree_get_value(bstree_node_t* node) {
+    vm_area_t* n = CONTAINER_OF(node, vm_area_t, node);
+    return n->start;
 }
