@@ -14,5 +14,7 @@ int process_fd_open(process_t* process, const char *path, int flags, int mode);
 int process_fd_close(process_t* process, int fd);
 file_t* process_unpack_fd(const process_t* process, int fd);
 
+int process_fd_base(process_t* process);
+
 void fd_init();
 bool process_fd_init(process_t* process);

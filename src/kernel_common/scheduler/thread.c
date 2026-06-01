@@ -115,3 +115,7 @@ thread_t* user_thread_create(process_t* process) {
     setup_user_stack(thread, (void (*)(void*))process->entry_point);
     return thread;
 }
+
+void switch_thread_fs(thread_t* thread) {
+    wrmsr(IA32_FS_BASE, thread->fs_base);
+}

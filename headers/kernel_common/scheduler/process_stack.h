@@ -15,6 +15,16 @@
 #define AT_RANDOM   25
 #define AT_EXECFN   31
 
+#define PROCESS_DEFAULT_ENV_COUNT 5
+
+static const char *const process_default_env[PROCESS_DEFAULT_ENV_COUNT] = {
+    "PATH=/bin:/usr/bin:/usr/local/bin",
+    "HOME=/",
+    "PWD=/",
+    "TERM=linux",
+    "USER=root"
+};
+
 static inline void push_u64(uint64_t **sp, uint64_t value) {
     *--(*sp) = value;
 }
@@ -47,4 +57,15 @@ static char* push_string(
     *sp = (uint64_t*)bytes;
 
     return (char*)bytes;
+}
+
+static inline size_t push_default_env_strings(
+    uint64_t **sp,
+    char *out_env[PROCESS_DEFAULT_ENV_COUNT]
+) {
+    for (size_t i = 0; i < PROCESS_DEFAULT_ENV_COUNT; i++) {
+        out_env[i] = push_string(sp, process_default_env[i]);
+    }
+
+    return PROCESS_DEFAULT_ENV_COUNT;
 }

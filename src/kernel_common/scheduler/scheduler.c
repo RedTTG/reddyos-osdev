@@ -47,9 +47,10 @@ void schedule()
         // terminal_write("\n");
         paging_load_cr3(target_cr3);
     }
+    switch_thread_fs(next); // FS base
 
     // terminal_write("prev (");
-    // terminal_write_u64(prev->tid);
+    // terminal_write_u64(prev->tid); 
     // terminal_write("): ");
     // terminal_write_hex_u64(prev->rsp);
     // terminal_write(", next (");

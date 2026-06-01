@@ -1,0 +1,89 @@
+#include "common.h"
+
+
+bool vma_insert(process_t *p, vm_area_t *vma) {
+    return bstree_insert(&p->vma_tree, &vma->node) != NULL;
+}
+
+void vma_remove(process_t *proc, vm_area_t *vma) {
+    bstree_remove(&proc->vma_tree, &vma->node);
+}
+
+vm_area_t * vma_find(process_t *p, uint64_t addr) {
+    bstree_node_t* node =
+        bstree_search(
+            &p->vma_tree,
+            addr,
+            BST_SEARCH_TYPE_NEAREST_LTE
+        );
+
+    if (!node)
+        return NULL;
+
+    vm_area_t* vma =
+        CONTAINER_OF(node, vm_area_t, node);
+
+    if (addr >= vma->start &&
+        addr < vma->end)
+        return vma;
+
+    return NULL;
+}
+
+bool vma_overlaps(process_t *p, uint64_t start, uint64_t end) {
+    bstree_node_t* node =
+        bstree_search(
+            &p->vma_tree,
+            start,
+            BST_SEARCH_TYPE_NEAREST_LTE
+        );
+
+    if (!node)
+        node = bstree_minimum(p->vma_tree.root);
+
+    while (node) {
+        vm_area_t* vma =
+            CONTAINER_OF(node, vm_area_t, node);
+
+        if (vma->start >= end)
+            break;
+
+        if (start < vma->end &&
+            end > vma->start)
+            return true;
+
+        node = bstree_successor(node);
+    }
+
+    return false;
+}
+
+uint64_t vma_find_free_region(process_t *p, uint64_t length) {
+        bstree_node_t* node = p->vma_tree.root;
+        uint64_t last_end = VMA_BASE;
+        while (node) {
+            vm_area_t* vma = CONTAINER_OF(node, vm_area_t, node);
+            if (vma->start - last_end >= length)
+                return last_end;
+            last_end = vma->end;
+            node = node->right;
+        }
+        return last_end;
+}
+
+u64 mmap_region(file_t *file, u64 addr,
+                u64 len, u64 vm_flags,
+                u64 pgoff) {
+    vm_area_t* vma = kcalloc(1, sizeof(vm_area_t));
+    terminal_write("start: ");
+    terminal_write_hex_u64(addr);
+    terminal_write("\n");
+    vma->start = addr;
+    vma->end = addr + len;
+    vma->vm_flags = vm_flags;
+    vma->type = VMA_ANON;
+
+    vma_insert(CUR_PROCESS, vma);
+
+    return vma->start;
+}

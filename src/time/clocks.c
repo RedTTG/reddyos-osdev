@@ -117,7 +117,7 @@ void clocks_init(void) {
 
 
     setup_boot_clock();
-    // debug_avail_clocks();
+    debug_avail_clocks();
 }
 
 uint64_t ns_since_boot(void) {

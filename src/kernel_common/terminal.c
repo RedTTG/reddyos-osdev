@@ -113,3 +113,46 @@ void terminal_write_hex_u8(uint8_t value)
         terminal_putc(digits[(value >> shift) & 0xF]);
     }
 }
+
+int std_write(vnode_t *node, uint64_t offset, const void *buffer, uint64_t size) {
+    terminal_write_u64(offset);
+    terminal_write_u64(offset + size);
+    terminal_write(": ");
+    for (uint64_t i = 0; i < size; i++) {
+        char c = ((const char*)buffer)[i];
+        if (c >= 32 && c <= 126) {
+            terminal_putc(c);
+        } else {
+            terminal_write_hex_u8((uint8_t)c);
+        }
+    }
+    return 0;
+}
+
+static vnode_ops_t stdin_ops =
+{
+    .read = NULL,
+    .write = NULL,
+    .ioctl = NULL,
+};
+
+static vnode_ops_t stdout_ops =
+{
+    .read = NULL,
+    .write = std_write,
+    .ioctl = NULL,
+};
+
+static vnode_ops_t stderr_ops =
+{
+    .read = NULL,
+    .write = std_write,
+    .ioctl = NULL,
+};
+
+
+void terminal_device_init(void) {
+    devfs_register("stdin", &stdin_ops, NULL);
+    devfs_register("stdout", &stdout_ops, NULL);
+    devfs_register("stderr", &stderr_ops, NULL);
+}

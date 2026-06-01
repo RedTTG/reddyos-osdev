@@ -18,6 +18,9 @@ void setup_process_stack(process_t* p, const char* filename, const elf_info_t* i
             filename
         );
 
+    char *env_ptrs[PROCESS_DEFAULT_ENV_COUNT] = {0};
+    size_t env_count = push_default_env_strings(&sp, env_ptrs);
+
     // Align before pushing pointers.
     sp = (uint64_t*)
         ((uintptr_t)sp & ~0xFULL);
@@ -26,6 +29,23 @@ void setup_process_stack(process_t* p, const char* filename, const elf_info_t* i
     push_u64(&sp, 0);
     push_u64(&sp, 0);
     uint8_t* random_ptr = (uint8_t*)sp;
+
+    // Try to populate AT_RANDOM with lightweight entropy so mlibc can
+    // initialize stack protector and other guards. We don't have a
+    // full RNG here, so mix together available sources (uptime, pid,
+    // entry point and the stack top) through a simple xorshift.
+    {
+        uint64_t seed = (uint64_t)ns_since_boot() ^ p->pid ^ (uint64_t)p->entry_point ^ (uint64_t)(uintptr_t)stack_top;
+        uint64_t rnd = seed ? seed : 0xdeadbeefcafebabeULL;
+
+        for (int i = 0; i < 2; i++) {
+            // xorshift64*
+            rnd ^= rnd << 13;
+            rnd ^= rnd >> 7;
+            rnd ^= rnd << 17;
+            ((uint64_t*)random_ptr)[i] = rnd;
+        }
+    }
 
     // Auxiliary vector
     // AUXV (STACK GROWS DOWNWARDS, terminator first)
@@ -77,7 +97,19 @@ void setup_process_stack(process_t* p, const char* filename, const elf_info_t* i
 
     // envp[]
 
+    // The number of pointer-sized entries
+    size_t remaining_pointer_pushes = 4 + env_count; // env NULL + envs + argv NULL + progname + argc
+    if (remaining_pointer_pushes & 1) {
+        // Insert a single padding word under env/argv so it doesn't
+        // disturb the argv/argc layout (must not be placed between
+        // argv entries and argc).
+        push_u64(&sp, 0);
+    }
+
     push_ptr(&sp, NULL);
+    for (size_t i = env_count; i > 0; i--) {
+        push_ptr(&sp, env_ptrs[i - 1]);
+    }
 
     // argv[]
 
@@ -85,6 +117,7 @@ void setup_process_stack(process_t* p, const char* filename, const elf_info_t* i
     push_ptr(&sp, prog_name_ptr);
 
     // argc
+
 
     push_u64(&sp, 1);
 
@@ -122,9 +155,9 @@ process_t* process_create(const char* filename)
 
     if (!filename)
         return 0;
-
     if (vfs_open(filename, &file, O_RDONLY, 0) != 0)
         return 0;
+
 
     if (elf_read_info(&file, &info) != 0)
         return 0;
@@ -198,6 +231,10 @@ process_t* process_create(const char* filename)
     // Set up VMA
     p->vma_tree.value_of_node = vma_tree_get_value;
     p->vma_tree.type = BST_TYPE_RB;
+
+    // Set up stdin/stdout/stderr
+    process_fd_base(p);
+
 
     return p;
 }

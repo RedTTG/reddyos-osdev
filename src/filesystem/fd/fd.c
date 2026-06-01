@@ -1,4 +1,5 @@
 #include "common.h"
+#include "fs_flags.h"
 
 file_t **global_file_table = NULL;
 size_t global_file_capacity = 0;
@@ -130,6 +131,17 @@ int process_fd_open(process_t* process, const char *path, int flags, int mode) {
 clean_of:
     of_close(of_idx);
     return -1;
+}
+
+int process_fd_base(process_t* process) {
+    // Initialize virtual stdin/stdout/stderr
+    if (process_fd_open(process, "/dev/stdin", O_RDONLY, 0) < 0)
+        return -1;
+    if (process_fd_open(process, "/dev/stdout", O_WRONLY, 0) < 0)
+        return -1;
+    if (process_fd_open(process, "/dev/stderr", O_WRONLY, 0) < 0)
+        return -1;
+    return 0;
 }
 
 int process_fd_close(process_t *process, int fd) {

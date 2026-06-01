@@ -22,3 +22,6 @@ typedef struct
 #define DECLARE_ISR_STUB(n) extern char isr_stub_##n[];
 ISR_STUB_LIST(DECLARE_ISR_STUB)
 #undef DECLARE_ISR_STUB
+
+typedef bool (*isr_handler_t)(const interrupt_frame_t*);
+void isr_register_handler(uint8_t vector, isr_handler_t handler);

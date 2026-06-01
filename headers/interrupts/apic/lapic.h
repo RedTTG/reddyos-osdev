@@ -25,7 +25,9 @@
 #define LAPIC_TIMER_VECTOR     32
 
 #define LAPIC_LVT_INT_MASKED   (1 << 16)
+#define LAPIC_LVT_INT_UNMASKED   (0 << 16)
 #define LAPIC_LVT_PERIODIC     (1 << 17)
+#define LAPIC_DELIVERY_FIXED    (0 << 8)
 
 // -----------------------------
 // LAPIC Timer Dividers
@@ -48,12 +50,13 @@
 #define IA32_APIC_ENABLE            (1ULL << 11)
 #define IA32_APIC_BSP               (1ULL << 8)
 #define IA32_APIC_BASE_MASK         0xFFFFFFFFFFFFF000ULL
+#define IA32_APIC_X2APIC_ENABLE     (1ULL << 10)
 
 void lapic_init();
 void lapic_enable(void);
 void lapic_eoi(void);
 bool lapic_is_enabled(void);
 void lapic_timer_start(void);
-bool lapic_get_msr(void);
+bool lapic_check_msr(void);
 
 extern bool lapic_enabled;

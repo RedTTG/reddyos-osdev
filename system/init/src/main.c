@@ -2,11 +2,32 @@
 #include <reddyos/fb.h>
 #include <stdlib.h>
 #include "stdio.h"
+#include <string.h>
+#include <sys/ioctl.h>
+
+extern char **environ;
 
 int main(int argc, char **argv)
 {
 	(void)argc;
 	(void)argv;
+	// terminal_write("Environ is at: ");
+	// terminal_write_hex_u64((uint64_t)environ);
+	// terminal_write("\nEnviron 0 is: ");
+	// terminal_write_hex_u64((uint64_t)environ[0]);
+	// terminal_write("\nEnviron 1 is: ");
+	// terminal_write_hex_u64((uint64_t)environ[1]);
+	// terminal_write("\nEnviron 2 is: ");
+	// terminal_write_hex_u64((uint64_t)environ[2]);
+	// terminal_write("\nEnviron 3 is: ");
+	// terminal_write_hex_u64((uint64_t)environ[3]);
+	// terminal_write("\nEnviron 4 is: ");
+	// terminal_write_hex_u64((uint64_t)environ[4]);
+	// terminal_write("\nEnviron 5 is: ");
+	// terminal_write_hex_u64((uint64_t)environ[5]);
+	// terminal_write("\nEnviron 6 is: ");
+	// terminal_write_hex_u64((uint64_t)environ[6]);
+	// terminal_write("\n");
 
 	terminal_write("Opening /dev/fb0\n");
 	FILE* fb = fopen("/dev/fb0", "r+b");
@@ -15,10 +36,22 @@ int main(int argc, char **argv)
 		perror("fopen");
 		return 1;
 	}
+	terminal_write("Successfully opened /dev/fb0\n");
 
 	int fd = fileno(fb);  // key step
+	terminal_write("File descriptor for /dev/fb0: ");
+	terminal_write_u64(fd);
+	terminal_write("\n");
 
 	fb_info_t* info = malloc(sizeof(fb_info_t));
+	if (!info)
+		return 1;
+	memset(info, 0, sizeof(fb_info_t));
+
+	// run IOctl
+
+	terminal_write("Calling ioctl\n");
+	ioctl(fd, FB_IOCTL_GET_INFO, info);
 
 	terminal_write("Framebuffer info:\n");
 	terminal_write("Width: ");

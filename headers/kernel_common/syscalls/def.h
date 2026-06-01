@@ -3,6 +3,7 @@
 #include "fs/fs.h"
 #include "custom/term.h"
 #include "memory/memory.h"
+#include "arch/arch.h"
 
 static u64 sys_stub(const syscall_args_t* args) {
     panic((const char *)args->arg1);
@@ -20,6 +21,7 @@ X(8, sys_lseek)         \
 X(9, sys_mmap)          \
 X(16, sys_ioctl)        \
 X(100, sys_term)        \
+X(158, sys_arch_prctl)  \
 X(999, sys_stub)        \
 
 extern syscall_fun_t syscall_table[];

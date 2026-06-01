@@ -3,6 +3,9 @@
 #pragma once
 #include <stdint.h>
 
+#define IA32_FS_BASE 0xC0000100
+#define IA32_GS_BASE 0xC0000101
+
 typedef struct process process_t;
 
 typedef struct thread
@@ -11,6 +14,7 @@ typedef struct thread
     uint8_t* kernel_stack;
     uint8_t* user_stack;
     uint64_t tid;
+    uint64_t fs_base;
     void (*entry)(void* arg);
 
     process_t* process;
@@ -29,3 +33,4 @@ extern void thread_entry_user();
 extern void arch_switch_thread(thread_t* old, thread_t* next);
 thread_t* thread_create(void (*entry)(void* arg));
 thread_t* user_thread_create(process_t* process);
+void switch_thread_fs(thread_t* thread);

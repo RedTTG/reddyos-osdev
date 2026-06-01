@@ -3,6 +3,8 @@
 
 #include "common.h"
 
+static isr_handler_t handlers[32] = {0};
+
 static const char* exceptions[] =
 {
     "Divide by zero",
@@ -24,14 +26,9 @@ static const char* exceptions[] =
 
 void isr_handler(interrupt_frame_t* frame)
 {
-    if (frame->interrupt_number == 14 && current_thread && current_thread->process) {
-        uint64_t cr2;
-        __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
-        // TODO: ALLOCATE MORE PAGES TO STACK
-        if (cr2 + PAGE_SIZE >= current_thread->process->user_stack_bottom_max &&
-            cr2 < current_thread->process->user_stack_bottom && grow_user_stack(current_thread->process)) {
+    if (handlers[frame->interrupt_number]) {
+        if (handlers[frame->interrupt_number](frame))
             return;
-        }
     }
     // if (frame->interrupt_number == 13 && current_thread && current_thread->process) {
     //     // Only handle faults that originated from user mode (CPL == 3)
@@ -75,4 +72,8 @@ void isr_handler(interrupt_frame_t* frame)
     *p = 0;
 
     panic_isr(buffer, frame);
+}
+
+void isr_register_handler(const uint8_t vector, const isr_handler_t handler) {
+    handlers[vector] = handler;
 }
