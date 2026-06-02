@@ -15,10 +15,11 @@ void panic(const char* msg)
 __attribute__((__noreturn__))
 void panic_isr(const char* msg, const interrupt_frame_t* frame)
 {
-    uint64_t cr2, cr3, gs;
+    uint64_t cr2, cr3, gs_selector, gs_base;
     __asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
     __asm__ volatile ("mov %%cr3, %0" : "=r"(cr3));
-    __asm__ volatile ("mov %%gs, %0" : "=r"(gs));
+    __asm__ volatile ("mov %%gs, %0" : "=r"(gs_selector));
+    gs_base = rdmsr(IA32_GSBASE);
 
     terminal_write("\nKERNEL PANIC: ");
     terminal_write(msg);
@@ -52,16 +53,20 @@ void panic_isr(const char* msg, const interrupt_frame_t* frame)
     if (frame->interrupt_number == 14) {
         terminal_write("CR2: ");
         terminal_write_hex_u64(cr2);
+        terminal_write("\n");
     }
+    terminal_write("GS selector: ");
+    terminal_write_hex_u64(gs_selector);
     terminal_write("\n");
-    terminal_write("GS: ");
-    if (gs == 0) terminal_write("0 (User)");
-    else if (gs == (uint64_t)&percpu_data) {
-        terminal_write_hex_u64(gs);
+
+    terminal_write("GS base: ");
+    terminal_write_hex_u64(gs_base);
+    if (gs_base == (uint64_t)&percpu_data) {
         terminal_write(" (Kernel)");
+    } else if (gs_base == 0) {
+        terminal_write(" (User)");
     } else {
-        terminal_write_hex_u64(gs);
-        terminal_write(" (UNKNOWN)");
+        terminal_write(" (Unknown)");
     }
     terminal_write("\n");
 

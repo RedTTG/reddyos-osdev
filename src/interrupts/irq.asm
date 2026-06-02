@@ -35,7 +35,7 @@ IRQ 14
 IRQ 15
 
 irq_common:
-    swapgs_if_necessary;
+    swapgs_if_user;
     push rax
     push rbx
     push rcx
@@ -72,7 +72,7 @@ irq_common:
     pop rax
 
     add rsp, 16
-    swapgs
+    swapgs_if_exit;
     iretq
 
 section .note.GNU-stack noalloc noexec nowrite progbits

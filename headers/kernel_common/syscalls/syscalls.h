@@ -9,31 +9,33 @@
 #define EFER_SCE (1 << 0)
 #define EFER_NXE (1 << 11)
 
-typedef struct {
+typedef struct percpu_data {
+    struct percpu_data *self;
     u64 user_rsp;
-    u64 user_rcx;
-    u64 user_r11;
+    u64 kernel_rsp;
 } percpu_data_t;
 
 extern percpu_data_t percpu_data;
 
 typedef struct {
-    uint64_t rax, rbx, rcx, rdx, rbp, rdi, rsi,
-             r8, r9, r10, r11, r12, r13, r14, r15;
+    uint64_t r15, r14, r13, r12, r11, r10, r9, r8,
+            rsi, rdi, rbp, rdx, rcx, rbx, rax, user_rsp;
 } syscall_frame_t;
 
 typedef struct {
-    u64 rax;    // rax | Syscall number / return value
-    u64 arg1;   // rdi | Argument 1
-    u64 arg2;   // rsi | Argument 2
-    u64 arg3;   // rdx | Argument 3
-    u64 arg4;   // r10 | Argument 4 (R10 is used instead of RCX in syscall ABI)
-    u64 arg5;   //  r8 | Argument 5
-    u64 arg6;   //  r9 | Argument 6
+    u64 rax; // rax | Syscall number / return value
+    u64 arg1; // rdi | Argument 1
+    u64 arg2; // rsi | Argument 2
+    u64 arg3; // rdx | Argument 3
+    u64 arg4; // r10 | Argument 4 (R10 is used instead of RCX in syscall ABI)
+    u64 arg5; //  r8 | Argument 5
+    u64 arg6; //  r9 | Argument 6
 } syscall_args_t;
 
-typedef u64 (*syscall_fun_t)(const syscall_args_t* args);
+typedef u64 (*syscall_fun_t)(const syscall_args_t *args);
 
 extern void syscall_entry(void);
-u64 syscall_handler(syscall_frame_t* frame);
+
+u64 syscall_handler(syscall_frame_t *frame);
+
 void syscall_init(void);

@@ -2,7 +2,7 @@ global arch_switch_thread, thread_entry_kernel, thread_entry_user
 extern dump_context
 section .text
 
-; arch_switch_thread(Thread* old, Thread* next)
+; arch_switch_thread(thread_t* old, thread_t* next)
 arch_switch_thread:
     fxsave [rdi + 0x40]
 
@@ -21,7 +21,10 @@ arch_switch_thread:
     pop r12
     pop rbp
     pop rbx
-    ret
+    pop rax
+    jmp rax
+    ; Should never reach here. Fault if it does so we get a clear trap instead
+    ud2
 
 thread_entry_kernel:
     pop rdi
@@ -34,15 +37,7 @@ thread_entry_user:
 
     or  r11, 0x200 ; enable interrupts in user mode
 
-    ; Build the interrupt frame for iretq
-    ; iretq pops: RIP, CS, RFLAGS, RSP, SS (in that order, from top of frame)
-    sub rsp, 40               ; allocate space for the frame
-
-    mov qword [rsp + 32], 0x23      ; SS (user data segment, ring 3)
-    mov qword [rsp + 24], rdx       ; RSP (user stack pointer)
-    mov qword [rsp + 16], r11       ; RFLAGS (user flags)
-    mov qword [rsp + 8],  0x1b      ; CS (user code segment, ring 3)
-    mov qword [rsp + 0],  rcx       ; RIP (user return address)
+    mov rsp, rdx
 
     swapgs
-    iretq
+    o64 sysret

@@ -20,6 +20,18 @@ void syscall_init(void)
     wrmsr(IA32_GSBASE, (uint64_t)&percpu_data);
     wrmsr(IA32_KERNEL_GSBASE, 0);
 
+    void* phys_stack_top = pmm_alloc_page();
+    if (!phys_stack_top) {
+        panic("Failed to allocate page for percpu stack");
+        return;
+    }
+    percpu_data.self = &percpu_data;
+    percpu_data.user_rsp = 0;
+    percpu_data.kernel_rsp = (uint64_t)VIRT(phys_stack_top) + PAGE_SIZE - 1;
+    terminal_write("Kernel RSP for syscalls set to: ");
+    terminal_write_hex_u64(percpu_data.kernel_rsp);
+    terminal_write("\n");
+
     // Enable syscalls
     wrmsr(
         IA32_EFER,
@@ -62,6 +74,9 @@ u64 syscall_handler(syscall_frame_t* frame)
     //     terminal_write_u64(current_thread->process->pid);
     //     terminal_write("\n");
     // }
+    // terminal_write("user RSP: ");
+    // terminal_write_hex_u64(frame->user_rsp);
+    // terminal_write("\n");
 
     if (frame->rax >= syscallCount) {
         goto enosys;
@@ -95,5 +110,12 @@ u64 syscall_handler(syscall_frame_t* frame)
     };
 
     frame->rax = fun(syscall_args);
+
+    // get and print current rsp for debugging
+    // static uint64_t sys_after_rsp = 0;
+    // __asm__ volatile ("mov %%rsp, %0" : "=r"(sys_after_rsp));
+    // terminal_write("RSP after syscall: ");
+    // terminal_write_hex_u64(sys_after_rsp);
+    // terminal_write("\n");
     return frame->rax;
 }
