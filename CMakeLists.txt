@@ -20,6 +20,8 @@ project(reddyos C ASM_NASM)
 
 set(CMAKE_C_STANDARD 11)
 
+option(KMALLOC_CANARY "Leave unmapped guard pages around kmalloc allocations" OFF)
+
 enable_language(ASM_NASM)
 
 # Prefer clang if no compiler specified, but allow user override via cache
@@ -134,6 +136,10 @@ add_executable(reddyos
 foreach(_flag IN LISTS _REDDYOS_C_FLAGS)
     target_compile_options(reddyos PRIVATE $<$<COMPILE_LANGUAGE:C>:${_flag}>)
 endforeach()
+
+        target_compile_definitions(reddyos PRIVATE
+            $<$<BOOL:${KMALLOC_CANARY}>:KMALLOC_CANARY=1>
+        )
 
 # Only add kernel include directories to the kernel target (do NOT add them
 # globally). This prevents subdirectories (like system/) from inheriting kernel

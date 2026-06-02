@@ -5,7 +5,7 @@ set -e
 mkdir -p build
 (
 cd build
-cmake ..
+cmake .. -DKMALLOC_CANARY=ON
 )
 mkdir -p dist
 cmake --build build

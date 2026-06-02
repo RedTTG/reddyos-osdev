@@ -158,6 +158,18 @@ void kmain(void) {
     // Initialize the scheduler
     scheduler_init();
 
+    #ifdef KMALLOC_CANARY
+    terminal_write("KMALLOC_CANARY self-test: ");
+    if (kmalloc_canary_selftest()) {
+        terminal_write("PASS\n");
+    } else {
+        terminal_write("FAIL\n");
+        panic("KMALLOC_CANARY self-test failed");
+    }
+    #else
+    terminal_write("KMALLOC_CANARY self-test: N/A\n");
+    #endif
+
     thread_t* a = thread_create(load_init);
 
     scheduler_add(a);
