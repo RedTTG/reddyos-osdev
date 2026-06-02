@@ -159,11 +159,7 @@ void kmain(void) {
     scheduler_init();
 
     #ifdef KMALLOC_CANARY
-    terminal_write("KMALLOC_CANARY self-test: ");
-    if (kmalloc_canary_selftest()) {
-        terminal_write("PASS\n");
-    } else {
-        terminal_write("FAIL\n");
+    if (!kmalloc_canary_selftest()) {
         panic("KMALLOC_CANARY self-test failed");
     }
     #else
@@ -177,7 +173,7 @@ void kmain(void) {
     // Finally start the timer
     lapic_timer_start();
 
-    terminal_write("Kernel bring-up complete!\n");
+    //terminal_write("Kernel bring-up complete!\n");
 
     // We're done, just hang...
     hcf();

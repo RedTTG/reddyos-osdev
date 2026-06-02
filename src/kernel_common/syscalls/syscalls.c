@@ -28,9 +28,9 @@ void syscall_init(void)
     percpu_data.self = &percpu_data;
     percpu_data.user_rsp = 0;
     percpu_data.kernel_rsp = (uint64_t)VIRT(phys_stack_top) + PAGE_SIZE - 1;
-    terminal_write("Kernel RSP for syscalls set to: ");
-    terminal_write_hex_u64(percpu_data.kernel_rsp);
-    terminal_write("\n");
+    // terminal_write("Kernel RSP for syscalls set to: ");
+    // terminal_write_hex_u64(percpu_data.kernel_rsp);
+    // terminal_write("\n");
 
     // Enable syscalls
     wrmsr(

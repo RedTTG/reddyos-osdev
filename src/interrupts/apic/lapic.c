@@ -43,9 +43,6 @@ void lapic_init()
         panic("Could not get LAPIC address");
         return;
     }
-    terminal_write("LAPIC address: ");
-    terminal_write_hex_u64(lapic_address);
-    terminal_write("\n");
     lapic_map();
     lapic = (uint32_t*)memvirt(lapic_address);
     lapic_enable();
