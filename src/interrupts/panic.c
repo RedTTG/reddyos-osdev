@@ -12,6 +12,63 @@ void panic(const char* msg)
         __asm__ volatile("hlt");
 }
 
+static void print_gpf_error(u64 error_code)
+{
+    terminal_write("GPF INFO: ");
+
+    if (error_code == 0) {
+        terminal_write("No selector information\n");
+        return;
+    }
+
+    terminal_write("External: ");
+    terminal_write((error_code & 0x1) ? "Yes | " : "No | ");
+
+    terminal_write("IDT: ");
+    terminal_write((error_code & 0x2) ? "Yes | " : "No | ");
+
+    terminal_write("TI/LDT: ");
+    terminal_write((error_code & 0x4) ? "Yes | " : "No | ");
+
+    terminal_write("Index: ");
+    terminal_write_hex_u64(error_code >> 3);
+    terminal_write("\n");
+}
+
+static void print_pf_tables(address_space_t* as, u64 cr2, u64 error_code)
+{
+    terminal_write("PAGE INFO: ");
+    /* Present / Not present */
+    if (error_code & 0x1)
+        terminal_write("Protection Violation | ");
+    else
+        terminal_write("Page Not Present | ");
+
+    /* Read / Write */
+    if (error_code & 0x2)
+        terminal_write("Write | ");
+    else
+        terminal_write("Read | ");
+
+    /* User / Kernel */
+    if (error_code & 0x4)
+        terminal_write("User Mode | ");
+    else
+        terminal_write("Kernel Mode | ");
+
+    /* Reserved bit violation */
+    if (error_code & 0x8)
+        terminal_write("RSVD Violation | ");
+    else
+        terminal_write("No RSVD Issue | ");
+    /* Instruction fetch vs data access */
+    if (error_code & 0x10)
+        terminal_write("Instruction Fetch (NX violation)\n");
+    else
+        terminal_write("Data Access\n");
+    tables_debug(as->pml4, cr2);
+}
+
 __attribute__((__noreturn__))
 void panic_isr(const char* msg, const interrupt_frame_t* frame)
 {
@@ -73,37 +130,11 @@ void panic_isr(const char* msg, const interrupt_frame_t* frame)
     terminal_write("ERR: ");
     terminal_write_hex_u64(frame->error_code);
     terminal_write("\n");
+    if (frame->interrupt_number == 13) {
+        print_gpf_error(frame->error_code);
+    }
     if (frame->interrupt_number == 14) {
-        terminal_write("PAGE INFO: ");
-        /* Present / Not present */
-        if (frame->error_code & 0x1)
-            terminal_write("Protection Violation | ");
-        else
-            terminal_write("Page Not Present | ");
-
-        /* Read / Write */
-        if (frame->error_code & 0x2)
-            terminal_write("Write | ");
-        else
-            terminal_write("Read | ");
-
-        /* User / Kernel */
-        if (frame->error_code & 0x4)
-            terminal_write("User Mode | ");
-        else
-            terminal_write("Kernel Mode | ");
-
-        /* Reserved bit violation */
-        if (frame->error_code & 0x8)
-            terminal_write("RSVD Violation | ");
-        else
-            terminal_write("No RSVD Issue | ");
-        /* Instruction fetch vs data access */
-        if (frame->error_code & 0x10)
-            terminal_write("Instruction Fetch (NX violation)\n");
-        else
-            terminal_write("Data Access\n");
-        tables_debug(as->pml4, cr2);
+        print_pf_tables(as, cr2, frame->error_code);
     }
 
     terminal_write("RIP: ");
