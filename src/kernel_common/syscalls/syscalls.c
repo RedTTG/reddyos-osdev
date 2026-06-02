@@ -20,14 +20,20 @@ void syscall_init(void)
     wrmsr(IA32_GSBASE, (uint64_t)&percpu_data);
     wrmsr(IA32_KERNEL_GSBASE, 0);
 
-    void* phys_stack_top = pmm_alloc_page();
-    if (!phys_stack_top) {
-        panic("Failed to allocate page for percpu stack");
-        return;
+    // Map kernel stack pages
+    for (int i = 0; i < KERNEL_STACK_PAGES; i++) {
+        void* phys_page = pmm_alloc_page();
+        if (!phys_page) {
+            panic("Failed to allocate page for percpu kernel stack");
+            return;
+        }
+        uint64_t virt_addr = KERNEL_STACK_START + (i * PAGE_SIZE);
+        map_page(virt_addr, (uint64_t)phys_page, PAGE_WRITABLE | PAGE_NX);
     }
+
     percpu_data.self = &percpu_data;
     percpu_data.user_rsp = 0;
-    percpu_data.kernel_rsp = (uint64_t)VIRT(phys_stack_top) + PAGE_SIZE - 1;
+    percpu_data.kernel_rsp = KERNEL_STACK_START + (KERNEL_STACK_PAGES * PAGE_SIZE) - 1;
     // terminal_write("Kernel RSP for syscalls set to: ");
     // terminal_write_hex_u64(percpu_data.kernel_rsp);
     // terminal_write("\n");
