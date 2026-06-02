@@ -58,26 +58,41 @@ bool vma_overlaps(process_t *p, uint64_t start, uint64_t end) {
     return false;
 }
 
-uint64_t vma_find_free_region(process_t *p, uint64_t length) {
-        bstree_node_t* node = p->vma_tree.root;
-        uint64_t last_end = VMA_BASE;
-        while (node) {
-            vm_area_t* vma = CONTAINER_OF(node, vm_area_t, node);
-            if (vma->start - last_end >= length)
-                return last_end;
-            last_end = vma->end;
-            node = node->right;
-        }
-        return last_end;
+static void scan(bstree_node_t* node, vm_area_t** prev, uint64_t *last_end, uint64_t length, uint64_t *result)
+{
+    if (!node || *result) return;
+
+    scan(node->left, prev, last_end, length, result);
+
+    vm_area_t* vma = CONTAINER_OF(node, vm_area_t, node);
+
+    if (vma->start - *last_end >= length) {
+        *result = *last_end;
+        return;
+    }
+
+    *last_end = vma->end;
+
+    scan(node->right, prev, last_end, length, result);
+}
+
+uint64_t vma_find_free_region(process_t *p, uint64_t length)
+{
+    uint64_t result = 0;
+    uint64_t last_end = VMA_BASE;
+
+    scan(p->vma_tree.root, NULL, &last_end, length, &result);
+
+    return result ? result : last_end;
 }
 
 u64 mmap_region(file_t *file, u64 addr,
                 u64 len, u64 vm_flags,
                 u64 pgoff) {
     vm_area_t* vma = kcalloc(1, sizeof(vm_area_t));
-    terminal_write("start: ");
-    terminal_write_hex_u64(addr);
-    terminal_write("\n");
+    // terminal_write("start: ");
+    // terminal_write_hex_u64(addr);
+    // terminal_write("\n");
     vma->start = addr;
     vma->end = addr + len;
     vma->vm_flags = vm_flags;
