@@ -15,21 +15,12 @@
 %endmacro
 
 %macro swapgs_if_exit 0
-    test byte [rsp + 24], 3   ; CS is at iret/syscall frame
+    ; After popping the 15 saved GPRs in isr_common/irq_common, the hardware
+    ; iret frame begins at [rsp]. The saved CS is therefore at [rsp + 8].
+    test byte [rsp + 8], 3
     jz %%done
 
     swapgs
-    ;push rax
-
-    ;mov rax, [gs:0]
-    ;cmp byte [rax + 0x18], 0
-    ;je %%skip
-
-    ;mov byte [rax + 0x18], 0 ; in_user = 0
-    ;swapgs
-
-%%skip:
-    pop rax
 %%done:
 %endmacro
 %endif

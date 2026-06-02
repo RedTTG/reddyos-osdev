@@ -93,13 +93,13 @@ isr_common:
     pop rsi
     pop rdi
     pop rbp
-    pop rdx
-    pop rcx
-    pop rbx
-    pop rax
+    pop rdx;
+    pop rcx;
+    pop rbx;
+    pop rax;
 
-    swapgs_if_exit;
     add rsp, 16
+    swapgs_if_exit;
     iretq
 
 section .note.GNU-stack noalloc noexec nowrite progbits
