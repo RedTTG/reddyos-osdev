@@ -1,0 +1,1 @@
+add-symbol-file dist/bin/system/init 0x400000

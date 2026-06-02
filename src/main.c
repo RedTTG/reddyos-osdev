@@ -46,6 +46,8 @@ bool page_fault_handler(const interrupt_frame_t* frame)
                 // terminal_write_hex_u64(vma->start);
                 // terminal_write(" PG ");
                 // terminal_write_hex_u64(ALIGN_DOWN(addr, PAGE_SIZE));
+                // terminal_write(" PP ");
+                // terminal_write_hex_u64((uint64_t)phys_page);
                 // terminal_write("\n");
                 return true;
             }

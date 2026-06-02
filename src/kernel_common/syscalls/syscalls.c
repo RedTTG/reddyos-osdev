@@ -44,10 +44,14 @@ void syscall_init(void)
         rdmsr(IA32_EFER) | EFER_SCE | EFER_NXE
     );
 
-    // Star selectors
+    // STAR selectors:
+    // - lower half (bits 47:32): kernel CS for SYSCALL entry
+    // - upper half (bits 63:48): base selector used by SYSRET
+    //   SYSRET loads CS = STAR[63:48] + 16 and SS = STAR[63:48] + 8.
+    // Keep STAR upper at 0x1B so SYSRET lands in user CS/SS 0x2B/0x23.
     uint64_t star =
         ((uint64_t)0x08 << 32) |   // kernel CS at 0x08
-        ((uint64_t)0x1B << 48);    // user CS at 0x1B (ring-3 selector)
+        ((uint64_t)0x1B << 48);    // SYSRET base for user CS=0x2B, SS=0x23
 
     wrmsr(IA32_STAR, star);
 

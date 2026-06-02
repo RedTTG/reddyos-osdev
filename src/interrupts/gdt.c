@@ -25,7 +25,10 @@ __attribute__((aligned(16))) static uint8_t double_fault_ist_stack[8192];
 
 void gdt_install(void)
 {
-    // Predefined GDT entries: null, kernel code, kernel data, user code, user data
+    // Predefined GDT entries:
+    // 0x00 null, 0x08 kernel code, 0x10 kernel data,
+    // 0x18 user code, 0x20 user data, 0x28 user code (SYSRET CS),
+    // 0x30/0x38 TSS.
     static uint64_t gdt_entries[8];
 
     gdt_entries[0] = 0x0000000000000000ULL; // null
@@ -33,6 +36,7 @@ void gdt_install(void)
     gdt_entries[2] = 0x00af92000000ffffULL; // kernel data
     gdt_entries[3] = 0x00affb000000ffffULL; // user code (ring3)
     gdt_entries[4] = 0x00aff3000000ffffULL; // user data (ring3)
+    gdt_entries[5] = 0x00affb000000ffffULL; // user code (ring3) at 0x2b for SYSRET path
 
     // Initialize TSS: set rsp0 to top of our kernel_irq_stack
     for (int i = 0; i < (int)sizeof(tss); i++) ((uint8_t*)&tss)[i] = 0;
@@ -52,8 +56,8 @@ void gdt_install(void)
 
     uint64_t desc_high = (tss_base >> 32) & 0xFFFFFFFFULL;
 
-    gdt_entries[5] = desc_low;
-    gdt_entries[6] = desc_high;
+    gdt_entries[6] = desc_low;
+    gdt_entries[7] = desc_high;
 
     struct {
         uint16_t limit;
@@ -85,9 +89,9 @@ void gdt_install(void)
         : : : "ax"
     );
 
-    // Load the TSS (selector 0x28)
+    // Load the TSS (selector 0x30)
     __asm__ volatile(
-        "mov $0x28, %%ax\n"
+        "mov $0x30, %%ax\n"
         "ltr %%ax\n"
         : : : "ax"
     );

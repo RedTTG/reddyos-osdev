@@ -45,22 +45,19 @@ void schedule()
     if (target_cr3 && target_cr3 != paging_current_cr3()) {
         paging_load_cr3(target_cr3);
     }
+    assert(paging_current_cr3() == target_cr3);
+    assert(next != prev);
+    assert(next != 0);
+    assert(next->rsp != 0);
+    assert(next->entry != 0);
     switch_thread_fs(next); // FS base
-
-    // terminal_write("prev (");
-    // terminal_write_u64(prev->tid);
-    // terminal_write("): ");
-    // terminal_write_hex_u64(prev->rsp);
-    // terminal_write(", next (");
-    // terminal_write_u64(next->tid);
-    // terminal_write("): ");
-    // terminal_write_hex_u64(next->rsp);
-    // terminal_write("\n");
 
     current_thread = next;
 
     // terminal_write("Switching to thread ");
     // terminal_write_u64(current_thread->tid);
+    // terminal_write(" rsp: ");
+    // terminal_write_hex_u64(current_thread->rsp);
     // if (current_thread->process) {
     //     terminal_write(" of PID ");
     //     terminal_write_u64(current_thread->process->pid);
