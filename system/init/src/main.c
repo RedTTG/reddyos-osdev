@@ -5,79 +5,55 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <time.h>
 
+#include "stdbool.h"
 #include "abi-bits/vm-flags.h"
 
-extern char **environ;
+#define FRAME_NS 16666666ULL
 
 int main(int argc, char **argv)
 {
 	(void)argc;
 	(void)argv;
 
-	terminal_write("Opening /dev/fb0\n");
-	FILE* fb = fopen("/dev/fb0", "r+b");
+
+	FRAMEBUFFER* fb = fb_get("/dev/fb0");
 	if (!fb) {
-		terminal_write("Failed to open /dev/fb0\n");
-		perror("fopen");
-		return 1;
-	}
-	terminal_write("Successfully opened /dev/fb0\n");
-
-	int fd = fileno(fb);  // key step
-	terminal_write("File descriptor for /dev/fb0: ");
-	terminal_write_u64(fd);
-	terminal_write("\n");
-
-	fb_info_t* info = malloc(sizeof(fb_info_t));
-	if (!info)
-		return 1;
-	memset(info, 0, sizeof(fb_info_t));
-
-	// run IOctl
-
-	ioctl(fd, FB_IOCTL_GET_INFO, info);
-
-	terminal_write("Framebuffer info:\n");
-	terminal_write("Width: ");
-	terminal_write_u64(info->width);
-	terminal_write("\nHeight: ");
-	terminal_write_u64(info->height);
-	terminal_write("\nPitch: ");
-	terminal_write_u64(info->pitch);
-	terminal_write("\nBPP: ");
-	terminal_write_u64(info->bpp);
-	terminal_write("\nSize: ");
-	terminal_write_u64(info->size);
-	terminal_write("\n\n");
-
-	uint32_t *back = mmap(
-		NULL,
-		info->pitch * info->height,
-		PROT_READ | PROT_WRITE,
-		MAP_SHARED,
-		fd,
-		0
-	);
-
-	if ((intptr_t)back < 0) {
-		terminal_write("Failed to mmap framebuffer\n");
-		perror("mmap");
-		return 1;
+		perror("fb_get");
 	}
 
-	for (size_t y = 0; y < info->height; y++) {
-		for (size_t x = 0; x < info->width; x++) {
-			uint32_t nX = x * 255 / info->width;
-			uint32_t nY = y * 255 / info->height;
-			back[(y * (info->pitch / 4) + x)] = (nY << 8) | nX;
-		}
+	bool go_x = true;
+	bool go_y = true;
+	int x = 5, y = 5;
+
+	struct timespec start, end;
+
+	while (1) {
+		// clock_gettime(CLOCK_MONOTONIC, &start);
+		//
+		fb_clear(fb, 0x00000000);
+		fb_draw_rect(fb, x, y, 50, 50, 0x00FF0000, 5);
+		fb_draw_rect(fb, x, y, 50, 50, 0x000000FF, 0);
+		fb_flip(fb);
+		//
+		// clock_gettime(CLOCK_MONOTONIC, &end);
+		// long elapsed_ns =
+		// (end.tv_sec - start.tv_sec) * 1000000000L +
+		// (end.tv_nsec - start.tv_nsec);
+		//
+		// if (elapsed_ns < FRAME_NS) {
+		// 	struct timespec sleep = {
+		// 		.tv_sec = 0,
+		// 		.tv_nsec = FRAME_NS - elapsed_ns
+		// 	};
+		//
+		// 	nanosleep(&sleep, NULL);
+		// }
+
 	}
 
-	ioctl(fd, FB_IOCTL_FLIP, NULL);
-	terminal_write("Flipped!\n");
-
-	free(info);
+	fb_close(fb);
 
 	for (;;) {
 		// terminal_putc('X');
