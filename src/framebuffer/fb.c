@@ -71,9 +71,11 @@ static int fb_ioctl(vnode_t *vnode, uint64_t cmd, u64 arg) {
             return 0;
 
         case FB_IOCTL_CLEAR: {
-            uint8_t color = (uint8_t) arg;
+            uint32_t color = (uint32_t) arg;
             if (fb)
-                memset(fb->back, color, fb->size);
+                for (size_t i = 0; i < fb->size / 4; i++) {
+                    fb->back[i] = color;
+                }
             return 0;
         }
 
