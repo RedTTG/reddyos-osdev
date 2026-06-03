@@ -3,11 +3,11 @@
 static u64 tsc_base;
 
 static bool tsc_available(void) {
-    return cpu_has(0x80000001, 4);
+    return cpu_has_edx(0x1, 4);
 }
 
 static bool invariant_tsc(void) {
-    return cpu_has(0x80000007, 8);
+    return cpu_has_edx(0x80000007, 8);
 }
 
 static inline uint64_t rdtsc(void) {
@@ -37,13 +37,15 @@ u64 tsc_read(void) {
 }
 
 void tsc_init(void) {
-    if (!tsc_available())
+    if (!tsc_available()) {
+        terminal_write("WARNING: TSC not available\n");
         return;
-    // if (invariant_tsc()) {
-    //     terminal_write("The TSC is invariant\n");
-    // } else {
-    //     terminal_write("The TSC is NOT invariant\n");
-    // }
+    }
+    if (invariant_tsc()) {
+        terminal_write("The TSC is invariant\n");
+    } else {
+        terminal_write("The TSC is NOT invariant\n");
+    }
 
     uint64_t freq = calibrate_tsc();
     tsc_base = rdtsc();

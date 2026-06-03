@@ -11,6 +11,8 @@
 
 // ACPI
 #include "acpi/acpi.h"
+#include "acpi/madt.h"
+#include "acpi/fadt.h"
 
 // Filesystem
 #include "filesystem/vfs/vnode.h"
@@ -39,7 +41,6 @@
 #include "panic.h"
 
 // APIC
-#include "apic/madt.h"
 #include "apic/ioapic.h"
 #include "apic/lapic.h"
 

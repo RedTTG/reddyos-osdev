@@ -10,6 +10,7 @@ static const char* CLOCK_NAMES[] = {
     [CLOCK_TSC] = "TSC",
     [CLOCK_HPET] = "HPET",
     [CLOCK_PM_TIMER] = "PM Timer",
+    [CLOCK_RTC] = "RTC",
 };
 
 clock_source_t* get_clock_source_tail() {
@@ -49,7 +50,7 @@ clock_source_t* get_best_clock(void) {
     return NULL;
 }
 
-clock_source_t* register_clock_source(const u8 source_id, u64 (*now)(void), u64 freq) {
+clock_source_t* register_clock_source(const u8 source_id, CLOCK_FN_NOW, u64 freq) {
     clock_source_t* new_source = kmalloc(sizeof(clock_source_t));
     if (!new_source) {
         panic("Failed to allocate memory for clock source");
@@ -60,7 +61,33 @@ clock_source_t* register_clock_source(const u8 source_id, u64 (*now)(void), u64 
 
     new_source->id = source_id;
     new_source->now = now;
+    new_source->real = NULL;
     new_source->freq = freq;
+    new_source->next = NULL;
+
+    if (!clock_list) {
+        clock_list = new_source;
+    } else {
+        clock_source_t* tail = get_clock_source_tail();
+        tail->next = new_source;
+    }
+
+    return new_source;
+}
+
+clock_source_t * register_time_source(uint8_t source_id, CLOCK_FN_REAL) {
+    clock_source_t* new_source = kmalloc(sizeof(clock_source_t));
+    if (!new_source) {
+        panic("Failed to allocate memory for time source");
+        return NULL;
+    }
+
+    available_clocks |= CLOCK_MASK(source_id);
+
+    new_source->id = source_id;
+    new_source->now = NULL;
+    new_source->real = real;
+    new_source->freq = 0;
     new_source->next = NULL;
 
     if (!clock_list) {
@@ -89,9 +116,20 @@ void debug_avail_clocks(void) {
         terminal_write_u64(current->freq);
         terminal_write(" Hz");
 
-        terminal_write(", NOW: ");
-        terminal_write_u64(current->now());
-        terminal_write("\n");
+        if (current->now) {
+            terminal_write(", NOW: ");
+            terminal_write_u64(current->now());
+            terminal_write("\n");
+        }
+        if (current->real) {
+            struct timespec ts;
+            current->real(&ts);
+            terminal_write(", REAL: (sec: ");
+            terminal_write_u64(ts.tv_sec);
+            terminal_write(", nsec: ");
+            terminal_write_u64(ts.tv_nsec);
+            terminal_write(")\n");
+        }
 
         current = current->next;
     }
@@ -115,9 +153,10 @@ void clocks_init(void) {
 
     tsc_init();
 
+    rtc_init();
 
     setup_boot_clock();
-    //debug_avail_clocks();
+    debug_avail_clocks();
 }
 
 uint64_t ns_since_boot(void) {
