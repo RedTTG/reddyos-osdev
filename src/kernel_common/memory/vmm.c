@@ -137,8 +137,8 @@ void vmm_map(const address_space_t *address_space, const uint64_t virt, const ui
     // if (flags & PAGE_NX) terminal_write("NX ");
     // terminal_write("\n");
 
-    // if (phys > cpu_page_mask)
-    //     panic("Attempting to map physical address beyond CPU limit.");
+    if (phys > cpu_page_mask)
+        panic("Attempting to map physical address beyond CPU limit.");
 
     size_t pml4_i = PML4_INDEX(virt);
     size_t pdpt_i = PDPT_INDEX(virt);
