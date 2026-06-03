@@ -88,7 +88,7 @@ foreach(_hf IN LISTS _HEADER_FILES)
     get_filename_component(_dir ${_hf} PATH)
     list(APPEND _HEADER_DIRS ${_dir})
 endforeach()
-list(APPEND _HEADER_DIRS "${CMAKE_SOURCE_DIR}/toolchain/reddyos-sysdeps/include/abi-bits")
+list(APPEND _HEADER_DIRS "${CMAKE_SOURCE_DIR}/toolchain/reddyos-sysdeps/include/")
 list(APPEND _HEADER_DIRS "${CMAKE_SOURCE_DIR}/external/ftrees/")
 list(REMOVE_DUPLICATES _HEADER_DIRS)
 

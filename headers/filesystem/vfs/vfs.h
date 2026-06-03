@@ -1,6 +1,6 @@
 #pragma once
 #include "files.h"
-#include "stat.h"
+#include "abi-bits/stat.h"
 
 static const struct timespec TIME_ZERO = {0, 0};
 

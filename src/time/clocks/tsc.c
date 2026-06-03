@@ -41,11 +41,11 @@ void tsc_init(void) {
         terminal_write("WARNING: TSC not available\n");
         return;
     }
-    if (invariant_tsc()) {
-        terminal_write("The TSC is invariant\n");
-    } else {
-        terminal_write("The TSC is NOT invariant\n");
-    }
+    // if (invariant_tsc()) {
+    //     terminal_write("The TSC is invariant\n");
+    // } else {
+    //     terminal_write("The TSC is NOT invariant\n");
+    // }
 
     uint64_t freq = calibrate_tsc();
     tsc_base = rdtsc();

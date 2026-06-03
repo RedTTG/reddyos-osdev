@@ -1,6 +1,6 @@
 #include "common.h"
 #include "fs_flags.h"
-#include "stat.h"
+#include "abi-bits/stat.h"
 
 void *vfs_find_vnode(const char *path) {
     if (!root_mount)

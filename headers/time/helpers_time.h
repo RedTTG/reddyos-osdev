@@ -36,3 +36,7 @@ static inline void timespec_normalize(struct timespec *ts)
         ts->tv_nsec += 1000000000LL;
     }
 }
+
+static inline u64 timespec_to_nsec(struct timespec* ts) {
+    return ts->tv_sec * 1000000000LL + ts->tv_nsec;
+}
