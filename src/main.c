@@ -33,37 +33,7 @@ bool page_fault_handler(const interrupt_frame_t* frame)
         // Check for VMA
         vm_area_t* vma = vma_find(CUR_PROCESS, addr);
         if (vma) {
-            if (vma->type == VMA_ANON) {
-                void* phys_page = pmm_alloc_page();
-                if (!phys_page)
-                    return false;
-                // TODO: Adjust the actual flags
-                vmm_map(&CUR_PROCESS->address_space,ALIGN_DOWN(addr, PAGE_SIZE), (u64)phys_page, PAGE_PRESENT | PAGE_USER | PAGE_WRITABLE);
-                memset(VIRT(phys_page), 0, PAGE_SIZE);
-                // terminal_write("PF ");
-                // terminal_write_hex_u64(addr);
-                // terminal_write(" VMA ");
-                // terminal_write_hex_u64(vma->start);
-                // terminal_write(" PG ");
-                // terminal_write_hex_u64(ALIGN_DOWN(addr, PAGE_SIZE));
-                // terminal_write(" PP ");
-                // terminal_write_hex_u64((uint64_t)phys_page);
-                // terminal_write("\n");
-                return true;
-            } else {
-                void* phys = vmm_lookup_ap(&CUR_PROCESS->address_space, ALIGN_DOWN(addr, PAGE_SIZE));
-                if (phys) {
-                    terminal_write("Page fault on already mapped page? addr: ");
-                    terminal_write_hex_u64(addr);
-                    terminal_write(" hddm virt of the phys: ");
-                    terminal_write_hex_u64((u64)phys);
-                    terminal_write("\n");
-                    return false;
-                }
-                if (vma->file->vnode->ops->vma_fault(vma->file->vnode, vma, ALIGN_DOWN(addr, PAGE_SIZE))) {
-                    return true;
-                }
-            }
+            return vma_fault_handler(vma, addr);
         }
     }
 

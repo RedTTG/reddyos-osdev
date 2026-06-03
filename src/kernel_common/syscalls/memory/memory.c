@@ -69,3 +69,11 @@ u64 do_sys_mmap(void *addr, size_t length, int prot, int flags, int fd, off_t of
 
     return mmap_region(file, (u64)addr, len, vma_flags, offset);
 }
+
+u64 do_sys_munmap(void *addr, size_t length) {
+    u64 len = ALIGN_UP(length, PAGE_SIZE);
+    if (len == 0)
+        return -EINVAL;
+
+    return munmap_region((u64)addr, len);
+}

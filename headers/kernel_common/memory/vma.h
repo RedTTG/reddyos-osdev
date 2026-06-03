@@ -8,7 +8,11 @@ typedef enum {
     VMA_ANON,
     VMA_FILE
 } vma_type_t;
-
+typedef struct vma_phys_page {
+    u64 start; // VIRT
+    u64 phys;
+    struct vma_phys_page* next;
+} vma_phys_page_t;
 typedef struct vm_area {
     bstree_node_t node;
     u64 start;
@@ -17,6 +21,7 @@ typedef struct vm_area {
     u64 vm_flags;
 
     vma_type_t type;
+    vma_phys_page_t* phys_pages;
 
     union {
         struct {
@@ -64,3 +69,6 @@ uint64_t vma_find_free_region(
 u64 mmap_region(file_t *file, u64 addr,
                 u64 len, u64 vm_flags,
                 u64 pgoff);
+u64 munmap_region(u64 addr, u64 len);
+
+bool vma_fault_handler(vm_area_t* vma, u64 addr);

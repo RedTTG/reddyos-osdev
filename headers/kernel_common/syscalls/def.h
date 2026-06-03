@@ -19,6 +19,7 @@ X(4, sys_stat)          \
 X(5, sys_fstat)         \
 X(8, sys_lseek)         \
 X(9, sys_mmap)          \
+X(11, sys_munmap)          \
 X(16, sys_ioctl)        \
 X(100, sys_term)        \
 X(158, sys_arch_prctl)  \
