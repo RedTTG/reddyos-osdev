@@ -47,7 +47,8 @@ static vnode_ops_t tar_ops =
 {
     .read = tar_read,
     .write = NULL,
-    .ioctl = NULL
+    .ioctl = NULL,
+    .vma_fault = NULL
 };
 
 static vnode_t root_node;

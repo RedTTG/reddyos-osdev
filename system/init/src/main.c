@@ -4,6 +4,9 @@
 #include "stdio.h"
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
+
+#include "abi-bits/vm-flags.h"
 
 extern char **environ;
 
@@ -48,13 +51,26 @@ int main(int argc, char **argv)
 	terminal_write_u64(info->size);
 	terminal_write("\n\n");
 
+	uint32_t *back = mmap(
+		NULL,
+		info->pitch * info->height,
+		PROT_READ | PROT_WRITE,
+		MAP_SHARED,
+		fd,
+		0
+	);
+
+	if ((intptr_t)back < 0) {
+		terminal_write("Failed to mmap framebuffer\n");
+		perror("mmap");
+		return 1;
+	}
+
 	for (size_t y = 0; y < info->height; y++) {
 		for (size_t x = 0; x < info->width; x++) {
 			uint32_t nX = x * 255 / info->width;
 			uint32_t nY = y * 255 / info->height;
-			fseek(fb, (y * (info->pitch / 4) + x), SEEK_SET);
-			uint32_t pixel = (nY << 8) | nX;
-			fwrite(&pixel, sizeof(pixel), 1, fb);
+			back[(y * (info->pitch / 4) + x)] = (nY << 8) | nX;
 		}
 	}
 

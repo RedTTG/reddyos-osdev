@@ -20,7 +20,7 @@ typedef struct vm_area {
 
     union {
         struct {
-            void* file;
+            file_t* file;
             u64 pgoff;
         };
 
@@ -62,5 +62,5 @@ uint64_t vma_find_free_region(
 );
 
 u64 mmap_region(file_t *file, u64 addr,
-              u64 len, u64 vm_flags,
-              u64 pgoff);
+                u64 len, u64 vm_flags,
+                u64 pgoff);

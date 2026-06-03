@@ -101,6 +101,7 @@ static vnode_ops_t fb_ops =
     .read = fb_read,
     .write = fb_write,
     .ioctl = fb_ioctl,
+    .vma_fault = NULL
 };
 
 void fb_device_init(void) {

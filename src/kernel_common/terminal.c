@@ -134,6 +134,7 @@ static vnode_ops_t stdin_ops =
     .read = NULL,
     .write = NULL,
     .ioctl = NULL,
+    .vma_fault = NULL
 };
 
 static vnode_ops_t stdout_ops =
@@ -141,6 +142,7 @@ static vnode_ops_t stdout_ops =
     .read = NULL,
     .write = std_write,
     .ioctl = NULL,
+    .vma_fault = NULL
 };
 
 static vnode_ops_t stderr_ops =
@@ -148,6 +150,7 @@ static vnode_ops_t stderr_ops =
     .read = NULL,
     .write = std_write,
     .ioctl = NULL,
+    .vma_fault = NULL
 };
 
 

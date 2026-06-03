@@ -1,4 +1,5 @@
 #include "common.h"
+#include "abi-bits/errno.h"
 
 
 bool vma_insert(process_t *p, vm_area_t *vma) {
@@ -101,7 +102,17 @@ u64 mmap_region(file_t *file, u64 addr,
     vma->start = addr;
     vma->end = addr + len;
     vma->vm_flags = vm_flags;
-    vma->type = VMA_ANON;
+    if (file) {
+        if (!file->vnode->ops->vma_fault) {
+            terminal_write("File does not support mmap\n");
+            return -ENODEV;
+        }
+        vma->type = VMA_FILE;
+        vma->file = file;
+        vma->pgoff = pgoff;
+    } else {
+        vma->type = VMA_ANON;
+    }
 
     vma_insert(CUR_PROCESS, vma);
 

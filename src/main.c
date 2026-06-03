@@ -50,6 +50,9 @@ bool page_fault_handler(const interrupt_frame_t* frame)
                 // terminal_write_hex_u64((uint64_t)phys_page);
                 // terminal_write("\n");
                 return true;
+            } else {
+                vma->file->vnode->ops->vma_fault(vma->file->vnode, vma, ALIGN_DOWN(addr, PAGE_SIZE));
+                panic("Page fault on non-anonymous VMA, not implemented");
             }
         }
     }
