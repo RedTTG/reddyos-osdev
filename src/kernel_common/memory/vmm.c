@@ -1,47 +1,42 @@
 #include "common.h"
 
 address_space_t kernel_address_space;
+uint64_t cpu_page_mask;
 
-static uint64_t get_cr3(void)
-{
+static uint64_t get_cr3(void) {
     uint64_t val;
     __asm__ volatile ("mov %%cr3, %0" : "=r"(val));
     return val & ~0xFFF;
 }
 
-static void set_cr3(uint64_t cr3)
-{
+static void set_cr3(uint64_t cr3) {
     __asm__ volatile ("mov %0, %%cr3" :: "r"(cr3) : "memory");
 }
 
 void vmm_init(void) {
     kernel_address_space.cr3 = get_cr3();
-    kernel_address_space.pml4 = (uint64_t*)VIRT(kernel_address_space.cr3 & ~0xFFF);
+    kernel_address_space.pml4 = (uint64_t *) VIRT(kernel_address_space.cr3 & ~0xFFF);
+    cpu_page_mask = cpu_max_phys_mask();
 }
 
-void paging_copy_kernel_half(address_space_t* as)
-{
+void paging_copy_kernel_half(address_space_t *as) {
     // Copy the shared kernel half (upper 256 PML4 entries) from the master
     // kernel page table so that all kernel text/data/interrupt handlers remain
     // mapped identically in every process address space.
-    for (int i = 256; i < 512; i++)
-    {
+    for (int i = 256; i < 512; i++) {
         as->pml4[i] = kernel_address_space.pml4[i];
     }
 }
 
-uint64_t paging_current_cr3(void)
-{
+uint64_t paging_current_cr3(void) {
     return get_cr3();
 }
 
-uint64_t paging_kernel_cr3(void)
-{
+uint64_t paging_kernel_cr3(void) {
     return kernel_address_space.cr3;
 }
 
-static void invl_all(void)
-{
+static void invl_all(void) {
     __asm__ volatile(
         "mov %%cr3, %%rax\n"
         "mov %%rax, %%cr3\n"
@@ -49,38 +44,33 @@ static void invl_all(void)
     );
 }
 
-void paging_load_cr3(uint64_t cr3)
-{
+void paging_load_cr3(uint64_t cr3) {
     set_cr3(cr3);
 
     // optional but important if reloading same CR3
     invl_all();
 }
 
-uint64_t* phys_to_virt(const uint64_t phys)
-{
+uint64_t *phys_to_virt(const uint64_t phys) {
     // terminal_write("phys_to_virt: phys: ");
     // terminal_write_hex_u64(phys);
     // terminal_write("-> virt: ");
     // terminal_write_hex_u64(phys + hhdm_request.response->offset);
     // terminal_write("\n");
-    return (uint64_t*)(phys + hhdm_request.response->offset);
+    return (uint64_t *) (phys + hhdm_request.response->offset);
 }
 
-uint64_t virt_to_phys(const uint64_t virt)
-{
+uint64_t virt_to_phys(const uint64_t virt) {
     return virt - hhdm_request.response->offset;
 }
 
-static void invlpg(void* addr)
-{
+static void invlpg(void *addr) {
     __asm__ volatile("invlpg (%0)" :: "r"(addr) : "memory");
 }
 
-static uint64_t* alloc_table(void)
-{
-    uint64_t phys = (uint64_t)pmm_alloc_page();
-    uint64_t* table = phys_to_virt(phys);
+static uint64_t *alloc_table(void) {
+    uint64_t phys = (uint64_t) pmm_alloc_page();
+    uint64_t *table = phys_to_virt(phys);
 
     // terminal_write("Allocating new page table addr:");
     // terminal_write_hex_u64(phys);
@@ -92,33 +82,47 @@ static uint64_t* alloc_table(void)
     return table;
 }
 
-static uint64_t* get_next(uint64_t* table, const size_t index, const uint64_t flags)
-{
+static uint64_t *get_next(uint64_t *table, const size_t index, const uint64_t flags) {
     // terminal_write("get_next: table: ");
     // terminal_write_hex_u64((uint64_t)table);
     // terminal_write(", index: ");
     // terminal_write_u64(index);
     // terminal_write("\n");
-    if (!(table[index] & PAGE_PRESENT))
-    {
-        uint64_t* new_table = alloc_table();
+    if (!(table[index] & PAGE_PRESENT)) {
+        uint64_t *new_table = alloc_table();
 
         /* Do not propagate NX or other leaf-only flags into intermediate
          * page-table entries. Only copy user/cache/wthru hints. */
         uint64_t table_flags = flags & (PAGE_USER | PAGE_WTHRU | PAGE_NOCACHE);
 
         table[index] =
-            virt_to_phys((uint64_t)new_table) |
-            PAGE_PRESENT |
-            PAGE_WRITABLE |
-            table_flags;
+                virt_to_phys((uint64_t) new_table) |
+                PAGE_PRESENT |
+                PAGE_WRITABLE |
+                table_flags;
     }
 
     return phys_to_virt(table[index] & PAGE_MASK);
 }
 
-void vmm_map(const address_space_t* address_space, const uint64_t virt, const uint64_t phys, const uint64_t flags)
-{
+static inline uint64_t sanitize_flags(uint64_t flags, int level) {
+    switch (level) {
+        case 0: // PML4
+            return flags & (PAGE_PRESENT);
+
+        case 1: // PDPT
+            return flags & (PAGE_PRESENT | PAGE_USER);
+
+        case 2: // PD
+            return flags & (PAGE_PRESENT | PAGE_USER | PAGE_WRITABLE);
+
+        case 3: // PT
+        default:
+            return flags;
+    }
+}
+
+void vmm_map(const address_space_t *address_space, const uint64_t virt, const uint64_t phys, const uint64_t flags) {
     // terminal_write("Map page: table addr: ");
     // terminal_write_hex_u64((uint64_t)address_space);
     // terminal_write(", virt: ");
@@ -133,33 +137,35 @@ void vmm_map(const address_space_t* address_space, const uint64_t virt, const ui
     // if (flags & PAGE_NX) terminal_write("NX ");
     // terminal_write("\n");
 
+    // if (phys > cpu_page_mask)
+    //     panic("Attempting to map physical address beyond CPU limit.");
+
     size_t pml4_i = PML4_INDEX(virt);
     size_t pdpt_i = PDPT_INDEX(virt);
-    size_t pd_i   = PD_INDEX(virt);
-    size_t pt_i   = PT_INDEX(virt);
+    size_t pd_i = PD_INDEX(virt);
+    size_t pt_i = PT_INDEX(virt);
 
-    uint64_t* pdpt = get_next(address_space->pml4, pml4_i, flags);
-    uint64_t* pd   = get_next(pdpt, pdpt_i, flags);
-    uint64_t* pt   = get_next(pd, pd_i, flags);
+    uint64_t *pdpt = get_next(address_space->pml4, pml4_i, sanitize_flags(flags, 1));
+    uint64_t *pd = get_next(pdpt, pdpt_i, sanitize_flags(flags, 2));
+    uint64_t *pt = get_next(pd, pd_i, sanitize_flags(flags, 3));
 
     pt[pt_i] =
-        (phys & PAGE_MASK) |
-        PAGE_PRESENT |
-        flags;
+            (phys & cpu_page_mask) |
+            PAGE_PRESENT |
+            flags;
 
-    invlpg((void*)virt);
+    invlpg((void *) virt);
 }
 
-void vmm_unmap(const address_space_t* address_space, const uint64_t virt)
-{
+void vmm_unmap(const address_space_t *address_space, const uint64_t virt) {
     size_t pml4_i = PML4_INDEX(virt);
     size_t pdpt_i = PDPT_INDEX(virt);
-    size_t pd_i   = PD_INDEX(virt);
-    size_t pt_i   = PT_INDEX(virt);
+    size_t pd_i = PD_INDEX(virt);
+    size_t pt_i = PT_INDEX(virt);
 
-    uint64_t* pdpt = phys_to_virt(address_space->pml4[pml4_i] & PAGE_MASK);
-    uint64_t* pd   = phys_to_virt(pdpt[pdpt_i] & PAGE_MASK);
-    uint64_t* pt   = phys_to_virt(pd[pd_i] & PAGE_MASK);
+    uint64_t *pdpt = phys_to_virt(address_space->pml4[pml4_i] & PAGE_MASK);
+    uint64_t *pd = phys_to_virt(pdpt[pdpt_i] & PAGE_MASK);
+    uint64_t *pt = phys_to_virt(pd[pd_i] & PAGE_MASK);
 
     pt[pt_i] = 0;
     // terminal_write("Unmapped pt: ");
@@ -168,7 +174,7 @@ void vmm_unmap(const address_space_t* address_space, const uint64_t virt)
     // terminal_write_u64(pt_i);
     // terminal_write("\n");
 
-    invlpg((void*)virt);
+    invlpg((void *) virt);
 }
 
 // uint64_t vmm_virt_to_phys(const address_space_t* address_space, const uint64_t virt)
@@ -185,87 +191,80 @@ void vmm_unmap(const address_space_t* address_space, const uint64_t virt)
 //     return (pt[pt_i] & PAGE_MASK) | (virt & 0xFFF);
 // }
 
-address_space_t paging_create_address_space(void)
-{
+address_space_t paging_create_address_space(void) {
     address_space_t as;
 
     // 1. allocate new PML4
-    as.pml4 = phys_to_virt((uint64_t)pmm_alloc_page());
+    as.pml4 = phys_to_virt((uint64_t) pmm_alloc_page());
     memset(as.pml4, 0, PAGE_SIZE);
     // 2. copy the shared kernel half (upper 256 entries)
     paging_copy_kernel_half(&as);
 
     // 3. convert to physical CR3
-    as.cr3 = virt_to_phys((uint64_t)as.pml4);
+    as.cr3 = virt_to_phys((uint64_t) as.pml4);
 
     return as;
 }
 
-void paging_destroy_address_space(address_space_t* as)
-{
-    uint64_t* pml4 = as->pml4;
+void paging_destroy_address_space(address_space_t *as) {
+    uint64_t *pml4 = as->pml4;
 
     // only user space (0–255 PML4 entries)
-    for (int i = 0; i < 256; i++)
-    {
+    for (int i = 0; i < 256; i++) {
         if (!(pml4[i] & PAGE_PRESENT))
             continue;
 
-        uint64_t* pdpt = phys_to_virt(pml4[i] & PAGE_MASK);
+        uint64_t *pdpt = phys_to_virt(pml4[i] & PAGE_MASK);
 
-        for (int j = 0; j < 512; j++)
-        {
+        for (int j = 0; j < 512; j++) {
             if (!(pdpt[j] & PAGE_PRESENT))
                 continue;
 
-            uint64_t* pd = phys_to_virt(pdpt[j] & PAGE_MASK);
+            uint64_t *pd = phys_to_virt(pdpt[j] & PAGE_MASK);
 
-            for (int k = 0; k < 512; k++)
-            {
+            for (int k = 0; k < 512; k++) {
                 if (!(pd[k] & PAGE_PRESENT))
                     continue;
 
-                uint64_t* pt = phys_to_virt(pd[k] & PAGE_MASK);
+                uint64_t *pt = phys_to_virt(pd[k] & PAGE_MASK);
 
-                for (int l = 0; l < 512; l++)
-                {
+                for (int l = 0; l < 512; l++) {
                     if (!(pt[l] & PAGE_PRESENT))
                         continue;
 
                     uint64_t phys = pt[l] & PAGE_MASK;
 
-                    pmm_free_page((void*)phys);
+                    pmm_free_page((void *) phys);
                 }
 
-                pmm_free_page((void*)virt_to_phys((uint64_t)pt));
+                pmm_free_page((void *) virt_to_phys((uint64_t) pt));
             }
 
-            pmm_free_page((void*)virt_to_phys((uint64_t)pd));
+            pmm_free_page((void *) virt_to_phys((uint64_t) pd));
         }
 
-        pmm_free_page((void*)virt_to_phys((uint64_t)pdpt));
+        pmm_free_page((void *) virt_to_phys((uint64_t) pdpt));
     }
 
     // free PML4 itself
-    pmm_free_page((void*)virt_to_phys((uint64_t)pml4));
+    pmm_free_page((void *) virt_to_phys((uint64_t) pml4));
 }
 
-uint64_t vmm_virt_to_phys_as(address_space_t* as, uint64_t virt)
-{
-    uint64_t* pml4 = as->pml4;
+int64_t vmm_virt_to_phys_as(address_space_t *as, uint64_t virt) {
+    uint64_t *pml4 = as->pml4;
 
     size_t pml4_i = PML4_INDEX(virt);
     size_t pdpt_i = PDPT_INDEX(virt);
-    size_t pd_i   = PD_INDEX(virt);
-    size_t pt_i   = PT_INDEX(virt);
+    size_t pd_i = PD_INDEX(virt);
+    size_t pt_i = PT_INDEX(virt);
 
-    uint64_t* pdpt = phys_to_virt(pml4[pml4_i] & PAGE_MASK);
+    uint64_t *pdpt = phys_to_virt(pml4[pml4_i] & PAGE_MASK);
     if (!(pml4[pml4_i] & PAGE_PRESENT)) return -1;
 
-    uint64_t* pd = phys_to_virt(pdpt[pdpt_i] & PAGE_MASK);
+    uint64_t *pd = phys_to_virt(pdpt[pdpt_i] & PAGE_MASK);
     if (!(pdpt[pdpt_i] & PAGE_PRESENT)) return -2;
 
-    uint64_t* pt = phys_to_virt(pd[pd_i] & PAGE_MASK);
+    uint64_t *pt = phys_to_virt(pd[pd_i] & PAGE_MASK);
     if (!(pd[pd_i] & PAGE_PRESENT)) return -3;
 
     if (!(pt[pt_i] & PAGE_PRESENT)) {
@@ -290,9 +289,15 @@ uint64_t vmm_virt_to_phys_as(address_space_t* as, uint64_t virt)
     return (pt[pt_i] & PAGE_MASK) | (virt & 0xFFF);
 }
 
-void* vmm_kernel_ap(address_space_t* as, uint64_t virt)
-{
-    uint64_t phys = vmm_virt_to_phys_as(as, virt);
+void *vmm_lookup(uint64_t virt) {
+    int64_t phys = vmm_virt_to_phys_as(&kernel_address_space, virt);
+    if (phys <= 0)
+        return NULL;
+    return (void*)phys;
+}
+
+void *vmm_lookup_ap(address_space_t *as, uint64_t virt) {
+    int64_t phys = vmm_virt_to_phys_as(as, virt);
 
 
     // terminal_write("Vmm translate virt: ");
@@ -302,30 +307,46 @@ void* vmm_kernel_ap(address_space_t* as, uint64_t virt)
     // terminal_write(" -> virt(kernel): ");
     // terminal_write_hex_u64((uint64_t)phys_to_virt(phys));
     // terminal_write("\n");
-    if (!phys) {
+    if (phys <= 0) {
         return 0;
     }
 
     return phys_to_virt(phys);
 }
 
-uint64_t vmm_map_page(const uint64_t phys, uint64_t flags)
-{
-    (void)flags;
+uint64_t vmm_map_page(const uint64_t phys, uint64_t flags) {
+    (void) flags;
     return phys; // placeholder for future per-process allocator
 }
 
-u64* print_table_perms(u64* table, u64 idx) {
+u64 *print_table_perms(u64 *table, u64 idx) {
     if (!table) {
         terminal_write("-\n");
         return NULL;
     }
-    terminal_write_hex_u64(memphys((u64)table));
+    terminal_write_hex_u64(memphys((u64) table));
     terminal_write("[");
     terminal_write_u64(idx);
     terminal_write("] ");
-    if (table[idx] & PAGE_PRESENT) terminal_write("PRESENT ");
-    else {
+    if (table[idx] & PAGE_PRESENT) {
+        terminal_write("PRESENT ");
+        if (table[idx] & PAGE_WRITABLE) {
+            terminal_write("WRITABLE ");
+        }
+        if (table[idx] & PAGE_USER) {
+            terminal_write("USER ");
+        }
+        if (table[idx] & PAGE_WTHRU) {
+            terminal_write("WTHRU ");
+        }
+        if (table[idx] & PAGE_NOCACHE) {
+            terminal_write("NOCACHE ");
+        }
+        if (table[idx] & PAGE_NOEXEC) {
+            terminal_write("NX ");
+        }
+        terminal_write_hex_u64(table[idx]);
+    } else {
         terminal_write("NOT PRESENT ");
         terminal_write_hex_u64(table[idx]);
     }
@@ -337,13 +358,13 @@ u64* print_table_perms(u64* table, u64 idx) {
     }
 }
 
-void tables_debug(u64* pml4, u64 virt) {
+void tables_debug(u64 *pml4, u64 virt) {
     terminal_write("PML4: ");
-    u64* pdpt = print_table_perms(pml4, PML4_INDEX(virt));
+    u64 *pdpt = print_table_perms(pml4, PML4_INDEX(virt));
     terminal_write("PDPT: ");
-    u64* pd = print_table_perms(pdpt, PDPT_INDEX(virt));
+    u64 *pd = print_table_perms(pdpt, PDPT_INDEX(virt));
     terminal_write("PD:   ");
-    u64* pt = print_table_perms(pd, PD_INDEX(virt));
+    u64 *pt = print_table_perms(pd, PD_INDEX(virt));
     terminal_write("PT:   ");
     print_table_perms(pt, PT_INDEX(virt));
 }

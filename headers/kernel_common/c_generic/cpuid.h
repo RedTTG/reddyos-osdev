@@ -29,3 +29,21 @@ static inline bool cpu_has(uint32_t leaf, uint8_t bit) {
     cpuid_leaf(leaf, &a, &b, &c, &d);
     return d & (1u << bit);
 }
+
+static inline uint8_t cpu_max_phys_bits(void)
+{
+    uint32_t eax, ebx, ecx, edx;
+    cpuid_leaf(0x80000008, &eax, &ebx, &ecx, &edx);
+
+    return (uint8_t)(eax & 0xFF);
+}
+
+static inline uint64_t cpu_max_phys_mask(void)
+{
+    uint8_t bits = cpu_max_phys_bits();
+
+    if (bits >= 64)
+        return ~0ULL;
+
+    return (1ULL << bits) - 1;
+}

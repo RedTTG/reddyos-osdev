@@ -51,8 +51,18 @@ bool page_fault_handler(const interrupt_frame_t* frame)
                 // terminal_write("\n");
                 return true;
             } else {
-                vma->file->vnode->ops->vma_fault(vma->file->vnode, vma, ALIGN_DOWN(addr, PAGE_SIZE));
-                panic("Page fault on non-anonymous VMA, not implemented");
+                void* phys = vmm_lookup_ap(&CUR_PROCESS->address_space, ALIGN_DOWN(addr, PAGE_SIZE));
+                if (phys) {
+                    terminal_write("Page fault on already mapped page? addr: ");
+                    terminal_write_hex_u64(addr);
+                    terminal_write(" hddm virt of the phys: ");
+                    terminal_write_hex_u64((u64)phys);
+                    terminal_write("\n");
+                    return false;
+                }
+                if (vma->file->vnode->ops->vma_fault(vma->file->vnode, vma, ALIGN_DOWN(addr, PAGE_SIZE))) {
+                    return true;
+                }
             }
         }
     }

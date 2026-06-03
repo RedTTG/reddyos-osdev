@@ -102,10 +102,11 @@ u64 mmap_region(file_t *file, u64 addr,
     vma->start = addr;
     vma->end = addr + len;
     vma->vm_flags = vm_flags;
+    u64 ret;
     if (file) {
         if (!file->vnode->ops->vma_fault) {
-            terminal_write("File does not support mmap\n");
-            return -ENODEV;
+            ret = -ENODEV;
+            goto delete;
         }
         vma->type = VMA_FILE;
         vma->file = file;
@@ -116,5 +117,9 @@ u64 mmap_region(file_t *file, u64 addr,
 
     vma_insert(CUR_PROCESS, vma);
 
-    return vma->start;
+    ret = vma->start;
+    return ret;
+delete:
+    kfree(vma);
+    return ret;
 }

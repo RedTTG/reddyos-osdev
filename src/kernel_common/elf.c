@@ -222,7 +222,7 @@ int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_inf
             u64 to_read = ph.filesz - offset;
             if (to_read > PAGE_SIZE)
                 to_read = PAGE_SIZE;
-            if (read_exact(file, vmm_kernel_ap(as, ph.vaddr + offset), to_read) < 0)
+            if (read_exact(file, vmm_lookup_ap(as, ph.vaddr + offset), to_read) < 0)
                 goto fail;
             offset += to_read;
         }
@@ -234,7 +234,7 @@ int elf_load_into_address_space(address_space_t* as, file_t* file, const elf_inf
                 u64 to_null = extra - offset;
                 if (to_null > PAGE_SIZE)
                     to_null = PAGE_SIZE;
-                memset(vmm_kernel_ap(as, ph.vaddr + ph.filesz + offset), 0, to_null);
+                memset(vmm_lookup_ap(as, ph.vaddr + ph.filesz + offset), 0, to_null);
                 offset += to_null;
             }
         }

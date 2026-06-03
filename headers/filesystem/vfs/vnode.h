@@ -24,7 +24,7 @@ typedef struct vnode_ops
         u64 cmd,
         u64 arg
         );
-    int (*vma_fault)(
+    bool (*vma_fault)(
         vnode_t* node,
         vm_area_t* vma,
         u64 page

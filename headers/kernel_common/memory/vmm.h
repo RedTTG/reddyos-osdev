@@ -8,7 +8,6 @@
 #define PAGE_NX       (1ULL << 63)
 #define PAGE_NOEXEC       (1ULL << 63)
 
-// #define PAGE_MASK 0xFFFFFFFFFFFFF000ULL
 #define PAGE_MASK 0x000FFFFFFFFFF000ULL
 
 
@@ -40,7 +39,8 @@ uint64_t virt_to_phys(uint64_t virt);
 
 void vmm_map(const address_space_t* address_space, uint64_t virt, uint64_t phys, uint64_t flags);
 void vmm_unmap(const address_space_t* address_space, uint64_t virt);
-uint64_t vmm_virt_to_phys_as(address_space_t* address_space, uint64_t virt);
+
+int64_t vmm_virt_to_phys_as(address_space_t *address_space, uint64_t virt);
 
 inline void map_page(uint64_t virt, uint64_t phys, uint64_t flags) {
     vmm_map(&kernel_address_space, virt, phys, flags);
@@ -53,7 +53,9 @@ address_space_t paging_create_address_space(void);
 void paging_copy_kernel_half(address_space_t* address_space);
 void paging_destroy_address_space(address_space_t* address_space);
 
-void* vmm_kernel_ap(address_space_t* address_space, uint64_t virt);
+// Find Physical Addresses
+void *vmm_lookup(uint64_t virt);
+void* vmm_lookup_ap(address_space_t* address_space, uint64_t virt);
 
 uint64_t vmm_map_page(uint64_t phys, uint64_t flags);
 
