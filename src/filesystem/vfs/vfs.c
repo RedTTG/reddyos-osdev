@@ -2,11 +2,11 @@
 #include "fs_flags.h"
 #include "stat.h"
 
-void* vfs_find_vnode(const char* path) {
+void *vfs_find_vnode(const char *path) {
     if (!root_mount)
         return NULL;
 
-    vnode_t* node = root_mount->root;
+    vnode_t *node = root_mount->root;
 
     // Handle paths starting with /
     if (path[0] == '/')
@@ -22,12 +22,12 @@ void* vfs_find_vnode(const char* path) {
     if (len >= sizeof(tmp))
         return NULL;
     strcpy(tmp, path);
-    if (len > 0 && tmp[len-1] == '/')
-        tmp[len-1] = '\0';
+    if (len > 0 && tmp[len - 1] == '/')
+        tmp[len - 1] = '\0';
 
     // First, check if there's a direct child with the full name
     // (This handles tarfs files like "bin/init" stored as single names)
-    vnode_t** children = node->internal;
+    vnode_t **children = node->internal;
     if (children) {
         for (int i = 0; children[i]; i++) {
             if (!strcmp(children[i]->name, tmp)) {
@@ -38,10 +38,10 @@ void* vfs_find_vnode(const char* path) {
 
     // If no direct match, traverse path component by component
     // (This handles the new mount point structure like /dev/fb0)
-    char* path_copy = tmp;
+    char *path_copy = tmp;
     while (*path_copy) {
         // Find the next '/' or end of string
-        char* slash = strchr(path_copy, '/');
+        char *slash = strchr(path_copy, '/');
         size_t component_len;
 
         if (slash) {
@@ -65,7 +65,7 @@ void* vfs_find_vnode(const char* path) {
         if (!children)
             return NULL;
 
-        vnode_t* found = NULL;
+        vnode_t *found = NULL;
         for (int i = 0; children[i]; i++) {
             if (!strcmp(children[i]->name, component)) {
                 found = children[i];
@@ -89,32 +89,31 @@ void* vfs_find_vnode(const char* path) {
     return node;
 }
 
-int vfs_is_dir(const char* path) {
+int vfs_is_dir(const char *path) {
     if (!root_mount) return 0;
-    vnode_t* node = vfs_find_vnode(path);
+    vnode_t *node = vfs_find_vnode(path);
     if (!node) return 0;
     // Treat a vnode as directory when ops is NULL and internal is non-NULL
     return (node->ops == NULL && node->internal != NULL) ? 1 : 0;
 }
 
-int vfs_dir_count(const char* path) {
-    vnode_t* node = vfs_find_vnode(path);
+int vfs_dir_count(const char *path) {
+    vnode_t *node = vfs_find_vnode(path);
     if (!node) return -1;
-    vnode_t** children = node->internal;
+    vnode_t **children = node->internal;
     if (!children) return -1;
     int count = 0;
     for (int i = 0; children[i]; i++) count++;
     return count;
 }
 
-int vfs_open(const char* path, file_t* out, int flags, int mode)
-{
-    (void)mode;
+int vfs_open(const char *path, file_t *out, int flags, int mode) {
+    (void) mode;
 
     if (!root_mount)
         return -1;
 
-    vnode_t* node = vfs_find_vnode(path);
+    vnode_t *node = vfs_find_vnode(path);
     if (!node)
         return -1;
 
@@ -160,8 +159,7 @@ ssize_t vfs_write(
     file_t *file,
     const void *buffer,
     uint64_t size
-)
-{
+) {
     int write = file->vnode->ops->write(
         file->vnode,
         file->offset,
@@ -175,13 +173,12 @@ ssize_t vfs_write(
     return write;
 }
 
-int vfs_ioctl(file_t *file, uint64_t cmd, uint64_t arg)
-{
+int vfs_ioctl(file_t *file, uint64_t cmd, uint64_t arg) {
     if (!file || !file->vnode || !file->vnode->ops)
         return -1;
 
     if (!file->vnode->ops->ioctl)
-        return -1;  // Operation not supported
+        return -1; // Operation not supported
 
     return file->vnode->ops->ioctl(file->vnode, cmd, arg);
 }
@@ -193,7 +190,7 @@ int vfs_stat(vnode_t *node, struct stat *buffer) {
     memset(buffer, 0, sizeof(*buffer));
 
     buffer->st_dev = 1;
-    buffer->st_ino = (uint64_t)(uintptr_t)node;
+    buffer->st_ino = (uint64_t) (uintptr_t) node;
     buffer->st_uid = 0;
     buffer->st_gid = 0;
     buffer->st_blksize = 512;
@@ -205,7 +202,7 @@ int vfs_stat(vnode_t *node, struct stat *buffer) {
     const int is_chr = (node->ops != NULL && node->ops->ioctl != NULL);
 
     if (is_dir) {
-        vnode_t** children = (vnode_t**)node->internal;
+        vnode_t **children = (vnode_t **) node->internal;
         uint64_t count = 0;
 
         if (children) {
@@ -215,7 +212,7 @@ int vfs_stat(vnode_t *node, struct stat *buffer) {
 
         buffer->st_mode = S_IFDIR | S_IRUSR | S_IRGRP | S_IROTH |
                           S_IXUSR | S_IXGRP | S_IXOTH;
-        buffer->st_size = (int64_t)count;
+        buffer->st_size = (int64_t) count;
         buffer->st_nlink = 2;
         buffer->st_blocks = 0;
         return 0;
@@ -243,8 +240,7 @@ int vfs_stat(vnode_t *node, struct stat *buffer) {
     return 0;
 }
 
-off_t vfs_lseek(file_t *file, off_t offset, int whence)
-{
+off_t vfs_lseek(file_t *file, off_t offset, int whence) {
     if (!file || !file->vnode)
         return -1;
 
@@ -255,21 +251,25 @@ off_t vfs_lseek(file_t *file, off_t offset, int whence)
             new_offset = offset;
             break;
         case SEEK_CUR:
-            new_offset = (off_t)file->offset + offset;
+            new_offset = (off_t) file->offset + offset;
             break;
         case SEEK_END:
-            new_offset = (off_t)file->vnode->size + offset;
+            new_offset = (off_t) file->vnode->size + offset;
             break;
         default:
-            return -1;  // Invalid whence
+            terminal_write("Whence: ");
+            terminal_write_u64(whence);
+            terminal_write("\n");
+            panic("Invalid whence value in vfs_lseek");
+            return -1; // Invalid whence
     }
 
     // Clamp to valid range [0, vnode->size]
     if (new_offset < 0)
         new_offset = 0;
-    if (new_offset > (off_t)file->vnode->size)
-        new_offset = (off_t)file->vnode->size;
+    if (new_offset > (off_t) file->vnode->size)
+        new_offset = (off_t) file->vnode->size;
 
-    file->offset = (uint64_t)new_offset;
+    file->offset = (uint64_t) new_offset;
     return new_offset;
 }

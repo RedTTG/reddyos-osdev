@@ -152,7 +152,7 @@ static vnode_ops_t stderr_ops =
 
 
 void terminal_device_init(void) {
-    devfs_register("stdin", &stdin_ops, NULL);
-    devfs_register("stdout", &stdout_ops, NULL);
-    devfs_register("stderr", &stderr_ops, NULL);
+    vnode_t* stdin_vnode =  devfs_register("stdin", &stdin_ops, NULL);
+    vnode_t* stdout_vnode = devfs_register("stdout", &stdout_ops, NULL);
+    vnode_t* stderr_vnode = devfs_register("stderr", &stderr_ops, NULL);
 }

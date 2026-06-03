@@ -23,14 +23,15 @@ vm_area_t * vma_find(process_t *p, uint64_t addr) {
     vm_area_t* vma =
         CONTAINER_OF(node, vm_area_t, node);
 
-    if (addr >= vma->start &&
-        addr < vma->end)
+    if (addr >= vma->start && addr < vma->end) // It's important to be exclusive of the end
         return vma;
 
     return NULL;
 }
 
 bool vma_overlaps(process_t *p, uint64_t start, uint64_t end) {
+    if (!p->vma_tree.root)
+        return false;
     bstree_node_t* node =
         bstree_search(
             &p->vma_tree,
@@ -40,6 +41,9 @@ bool vma_overlaps(process_t *p, uint64_t start, uint64_t end) {
 
     if (!node)
         node = bstree_minimum(p->vma_tree.root);
+
+    if (!node)
+        return false;
 
     while (node) {
         vm_area_t* vma =
@@ -83,6 +87,10 @@ uint64_t vma_find_free_region(process_t *p, uint64_t length)
 
     scan(p->vma_tree.root, NULL, &last_end, length, &result);
 
+    if (vma_overlaps(p, last_end, last_end + length)) {
+        return 0; // No suitable region found
+    }
+
     return result ? result : last_end;
 }
 
@@ -90,9 +98,6 @@ u64 mmap_region(file_t *file, u64 addr,
                 u64 len, u64 vm_flags,
                 u64 pgoff) {
     vm_area_t* vma = kcalloc(1, sizeof(vm_area_t));
-    // terminal_write("start: ");
-    // terminal_write_hex_u64(addr);
-    // terminal_write("\n");
     vma->start = addr;
     vma->end = addr + len;
     vma->vm_flags = vm_flags;

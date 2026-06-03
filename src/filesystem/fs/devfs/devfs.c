@@ -17,7 +17,7 @@ void devfs_init(void) {
     dev_root_node.ops = NULL; // directory
 }
 
-bool devfs_register(const char* name, vnode_ops_t* ops, void* private) {
+vnode_t* devfs_register(const char* name, vnode_ops_t* ops, void* private) {
     // Find free node
     int idx = -1;
     for (int i = 0; i < DEVFS_MAX_NODES; i++) {
@@ -27,7 +27,7 @@ bool devfs_register(const char* name, vnode_ops_t* ops, void* private) {
         }
     }
     if (idx < 0)
-        return false;
+        return NULL;
 
     vnode_t* n = &dev_nodes[idx];
     memset(n, 0, sizeof(vnode_t));
@@ -49,7 +49,7 @@ bool devfs_register(const char* name, vnode_ops_t* ops, void* private) {
     for (int i = 0; i < DEVFS_MAX_NODES && dev_children[i]; i++) count++;
     dev_root_node.size = count;
 
-    return true;
+    return n;
 }
 
 vnode_t* devfs_root(void) {

@@ -43,6 +43,11 @@ static int fb_read(vnode_t *vnode, uint64_t offset, void *buffer, uint64_t size)
 }
 
 static int fb_write(vnode_t *vnode, uint64_t offset, const void *buffer, uint64_t size) {
+    // terminal_write("fb_write called with offset ");
+    // terminal_write_u64(offset);
+    // terminal_write(" and size ");
+    // terminal_write_u64(size);
+    // terminal_write("\n");
     reddyos_framebuffer_t* fb = (reddyos_framebuffer_t*)vnode->internal;
 
     if (offset >= fb->size)
@@ -51,7 +56,7 @@ static int fb_write(vnode_t *vnode, uint64_t offset, const void *buffer, uint64_
     if (offset + size > fb->size)
         size = fb->size - offset;
 
-    memcpy(((uint8_t*)fb->back) + offset, buffer, size);
+    memcpy(((uint32_t*)fb->back) + offset, buffer, size);
 
     return (int)size;
 }
@@ -61,6 +66,7 @@ static int fb_ioctl(vnode_t *vnode, uint64_t cmd, uint64_t arg) {
 
     switch (cmd) {
         case FB_IOCTL_FLIP:
+            terminal_write("FB_IOCTL_FLIP called\n");
             if (fb)
                 memcpy(fb->front, fb->back, fb->size);
             return 0;
@@ -73,6 +79,7 @@ static int fb_ioctl(vnode_t *vnode, uint64_t cmd, uint64_t arg) {
         }
 
         case FB_IOCTL_GET_INFO: {
+            terminal_write("FB_IOCTL_GET_INFO called\n");
             fb_info_t* info = (fb_info_t*)arg;
             if (!info || !fb)
                 return -1;
@@ -101,5 +108,8 @@ void fb_device_init(void) {
         fb_init();
     }
 
-    devfs_register("fb0", &fb_ops, fb0);
+    vnode_t* node = devfs_register("fb0", &fb_ops, fb0);
+    if (node) {
+        node->size = fb0->size;
+    }
 }

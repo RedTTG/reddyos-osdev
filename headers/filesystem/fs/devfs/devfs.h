@@ -4,7 +4,7 @@
 
 void devfs_init(void);
 
-bool devfs_register(
+vnode_t* devfs_register(
     const char* name,
     vnode_ops_t* ops,
     void* private
