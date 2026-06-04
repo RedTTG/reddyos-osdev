@@ -36,7 +36,8 @@ int main(int argc, char **argv)
 	while (1) {
 		clock_gettime(CLOCK_MONOTONIC, &start);
 		//
-		fb_clear(fb, 0x00000000);
+		// fb_clear(fb, 0x00101010);
+		fb_draw_rect(fb, 0, 0, fb->info.width, fb->info.height, 0x00FF0000, 3);
 		fb_draw_rect(fb, x, y, SQUARE_WIDTH, SQUARE_HEIGHT, 0x00FF0000, 5);
 		fb_draw_rect(fb, x, y, SQUARE_WIDTH, SQUARE_HEIGHT, 0x000000FF, 0);
 		fb_flip(fb);
