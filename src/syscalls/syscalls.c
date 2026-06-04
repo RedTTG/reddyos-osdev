@@ -1,6 +1,6 @@
 #include "common.h"
 #include "abi-bits/errno.h"
-#include "syscalls/def.h"
+#include "../../../headers/syscalls/def.h"
 
 // Per-CPU data for syscall handler (stores user RSP)
 __attribute__((aligned(16))) percpu_data_t percpu_data = {0};

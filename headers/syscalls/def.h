@@ -1,5 +1,5 @@
 #pragma once
-#include "syscalls/syscalls.h"
+#include "syscalls.h"
 #include "fs/fs.h"
 #include "custom/term.h"
 #include "memory/memory.h"

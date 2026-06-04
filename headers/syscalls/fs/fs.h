@@ -1,7 +1,7 @@
 // ReSharper disable CppParameterMayBeConst
 #pragma once
 #include <sys/types.h>
-#include "syscalls/syscalls.h"
+#include "../syscalls.h"
 
 u64 do_sys_open(const char* path, int flags, int mode);
 u64 do_sys_read(uint fd, void *buffer, size_t size);

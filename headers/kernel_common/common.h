@@ -47,7 +47,7 @@
 // KERNEL COMMON
 #include "limine_requests.h"
 #include "memory/pmm.h"
-#include "memory/vmm.h"
+#include "../memory/vmm.h"
 #include "memory/vma.h"
 #include "memory/heap.h"
 #include "terminal.h"
@@ -64,4 +64,4 @@
 #include "scheduler/scheduler.h"
 
 // Syscalls
-#include "syscalls/syscalls.h"
+#include "../syscalls/syscalls.h"

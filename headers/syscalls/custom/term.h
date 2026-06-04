@@ -1,5 +1,5 @@
 #pragma once
-#include "syscalls/syscalls.h"
+#include "../syscalls.h"
 
 u64 do_sys_term(char c);
 
